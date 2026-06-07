@@ -16,13 +16,31 @@ const getSecret = () => {
 };
 
 export async function signToken(payload: JwtPayload): Promise<string> {
-  const expiresIn = process.env.JWT_EXPIRES_IN || '1d';
-  // Parse duration string like "1d", "2h", "30m"
-  return new SignJWT({ ...payload })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(expiresIn)
-    .sign(getSecret());
+  let expiresIn: string | number = '1d';
+  
+  if (process.env.JWT_EXPIRES_IN) {
+    let envVal = process.env.JWT_EXPIRES_IN.trim().replace(/^['"]|['"]$/g, '');
+    if (/^\d+$/.test(envVal)) {
+      expiresIn = Math.floor(Date.now() / 1000) + parseInt(envVal, 10);
+    } else {
+      expiresIn = envVal;
+    }
+  }
+
+  try {
+    return await new SignJWT({ ...payload })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime(expiresIn)
+      .sign(getSecret());
+  } catch (error) {
+    console.warn('Invalid JWT_EXPIRES_IN format, falling back to "1d":', error);
+    return await new SignJWT({ ...payload })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('1d')
+      .sign(getSecret());
+  }
 }
 
 export async function verifyToken(token: string): Promise<JwtPayload | null> {
