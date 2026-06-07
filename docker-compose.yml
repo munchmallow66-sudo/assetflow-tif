@@ -1,0 +1,76 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: assetflow_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_password}
+      POSTGRES_DB: ${POSTGRES_DB:-assetflow}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-assetflow}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: assetflow_backend
+    restart: always
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_password}@db:5432/${POSTGRES_DB:-assetflow}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_key_minimum_32_characters}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      FRONTEND_URL: http://localhost:${FRONTEND_PORT:-3000}
+      PORT: 4000
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && npm run start:prod"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: assetflow_frontend
+    restart: always
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_password}@db:5432/${POSTGRES_DB:-assetflow}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_key_minimum_32_characters}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+      NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-4000}
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: assetflow_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin@assetflow.local
+      PGADMIN_DEFAULT_PASSWORD: pgadmin_password
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
