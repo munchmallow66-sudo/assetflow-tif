@@ -17,28 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: assetflow_backend
-    restart: always
-    ports:
-      - "${BACKEND_PORT:-4000}:4000"
-    environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres_secure_password}@db:5432/${POSTGRES_DB:-assetflow}?schema=public
-      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_key_minimum_32_characters}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
-      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
-      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
-      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
-      FRONTEND_URL: http://localhost:${FRONTEND_PORT:-3000}
-      PORT: 4000
-    depends_on:
-      db:
-        condition: service_healthy
-    command: sh -c "npx prisma migrate deploy && npm run start:prod"
-
   frontend:
     build:
       context: ./frontend
@@ -54,11 +32,11 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
-      NEXT_PUBLIC_API_URL: http://localhost:${BACKEND_PORT:-4000}
       PORT: 3000
     depends_on:
       db:
         condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && node server.js"
 
   pgadmin:
     image: dpage/pgadmin4:latest
