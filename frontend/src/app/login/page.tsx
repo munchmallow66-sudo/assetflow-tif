@@ -59,7 +59,7 @@ export default function LoginPage() {
     try {
       await login(data.email, data.password);
     } catch (err: any) {
-      setErrorMsg(err);
+      setErrorMsg(typeof err === 'string' ? err : (err?.message || 'การเข้าสู่ระบบล้มเหลว'));
       setLoading(false);
     }
   };
@@ -74,7 +74,7 @@ export default function LoginPage() {
       setActiveTab('login');
       resetRegForm();
     } catch (err: any) {
-      setErrorMsg(err);
+      setErrorMsg(typeof err === 'string' ? err : (err?.message || 'การลงทะเบียนล้มเหลว'));
     } finally {
       setLoading(false);
     }

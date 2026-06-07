@@ -4,8 +4,7 @@ const getBaseURL = () => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  // Fallback to relative path on client side (same domain), and local backend on server side
-  return typeof window === 'undefined' ? 'http://localhost:4000' : '/_/backend';
+  return '/api';
 };
 
 const api = axios.create({

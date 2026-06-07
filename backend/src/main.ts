@@ -8,8 +8,10 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  // Set global prefix if running on Vercel or configured via environment variables
-  const globalPrefix = configService.get<string>('GLOBAL_PREFIX') || (process.env.VERCEL ? '/_/backend' : '');
+  // Only set global prefix if explicitly configured (not on Vercel).
+  // Vercel experimentalServices routePrefix already handles path mounting,
+  // so setting a global prefix there would double-prefix all routes.
+  const globalPrefix = configService.get<string>('GLOBAL_PREFIX') || '';
   if (globalPrefix) {
     app.setGlobalPrefix(globalPrefix);
   }
