@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import AppLayout from "@/components/layout/AppLayout";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://assetflow-tif.vercel.app"),
   title: "ระบบจัดการยืม-คืนสินทรัพย์ | Thai Inter Flying",
   description: "ระบบจัดการการยืมและคืนสินทรัพย์ภายใน บริษัท Thai Inter Flying จำกัด",
 };
