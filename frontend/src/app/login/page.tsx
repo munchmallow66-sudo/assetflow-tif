@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -81,16 +82,40 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4 py-12 relative overflow-hidden">
-      {/* Background decoration elements */}
-      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4 py-12 relative overflow-hidden">
+      {/* Background Image with overlay */}
+      <div className="absolute inset-0 z-0 select-none pointer-events-none">
+        <Image
+          src="/login-bg.png?v=2"
+          alt="Aviation Background"
+          fill
+          priority
+          className="object-cover opacity-30"
+          unoptimized
+        />
+        {/* Dark overlay gradients */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/80 to-slate-950" />
+      </div>
 
-      <div className="w-full max-w-lg bg-slate-800/80 border border-slate-700/50 rounded-2xl shadow-2xl backdrop-blur-md overflow-hidden relative z-10">
+      {/* Background decoration elements */}
+      <div className="absolute top-[-10%] left-[-5%] w-[400px] h-[400px] bg-sky-500/10 rounded-full blur-[100px] pointer-events-none z-0" />
+      <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none z-0" />
+
+      <div className="w-full max-w-lg bg-slate-900/85 border border-slate-800/60 rounded-2xl shadow-2xl backdrop-blur-md overflow-hidden relative z-10">
         {/* Brand Header */}
-        <div className="p-8 text-center border-b border-slate-700/50 bg-slate-850/40">
-          <h2 className="text-2xl font-bold text-white tracking-wide">THAI INTER FLYING</h2>
-          <p className="text-slate-400 text-sm mt-2 font-medium">ระบบยืม-คืนสินทรัพย์ภายในองค์กร</p>
+        <div className="p-8 text-center border-b border-slate-700/50 bg-slate-850/40 flex flex-col items-center justify-center gap-1.5">
+          <Image
+            src="/logo.png?v=3"
+            alt="Thai Inter Flying Logo"
+            width={240}
+            height={99}
+            className="object-contain"
+            unoptimized
+          />
+          <div>
+            <h2 className="text-2xl font-bold text-white tracking-wide mt-1">THAI INTER FLYING</h2>
+            <p className="text-slate-400 text-sm mt-1 font-medium">ระบบยืม-คืนสินทรัพย์ภายในองค์กร</p>
+          </div>
         </div>
 
         {/* Tab Buttons */}

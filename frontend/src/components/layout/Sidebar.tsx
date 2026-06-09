@@ -2,8 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '../providers/AuthProvider';
+import { useTheme } from '../providers/ThemeProvider';
 import {
   LayoutDashboard,
   Box,
@@ -16,12 +18,15 @@ import {
   LogOut,
   FolderSync,
   Menu,
-  X
+  X,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = React.useState(false);
 
   if (!user) return null;
@@ -103,8 +108,15 @@ export default function Sidebar() {
       >
         <div>
           {/* Logo Brand */}
-          <div className="h-16 flex items-center justify-center border-b border-slate-800 px-6 gap-2">
-            <FolderSync className="text-sky-400" size={26} />
+          <div className="h-16 flex items-center justify-center border-b border-slate-800 px-6 gap-3">
+            <Image
+              src="/logo.png?v=3"
+              alt="Thai Inter Flying Logo"
+              width={42}
+              height={17}
+              className="object-contain"
+              unoptimized
+            />
             <span className="font-semibold text-lg tracking-wider text-white">Thai Inter Flying</span>
           </div>
 
@@ -150,7 +162,22 @@ export default function Sidebar() {
         </div>
 
         {/* Footer actions */}
-        <div className="p-4 border-t border-slate-800">
+        <div className="p-4 border-t border-slate-800 space-y-2">
+          {/* Theme Switcher Button */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="flex items-center justify-between w-full px-4 py-2.5 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer"
+          >
+            <div className="flex items-center gap-3">
+              {theme === 'dark' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} />}
+              <span>{theme === 'dark' ? 'โหมดสว่าง (Light)' : 'โหมดมืด (Dark)'}</span>
+            </div>
+            <div className={`w-8 h-4 flex items-center rounded-full p-0.5 transition-colors duration-200 ${theme === 'dark' ? 'bg-sky-500' : 'bg-slate-700'}`}>
+              <div className={`bg-white w-3 h-3 rounded-full shadow-md transform transition-transform duration-200 ${theme === 'dark' ? 'translate-x-4' : 'translate-x-0'}`}></div>
+            </div>
+          </button>
+          
           <button
             onClick={logout}
             className="flex items-center gap-3 w-full px-4 py-3 text-slate-400 hover:text-red-400 hover:bg-red-950/20 rounded-lg text-sm font-medium transition-all duration-200"

@@ -104,6 +104,7 @@ model BorrowRequest {
   approvedBy         User?         @relation("ApprovedRequests", fields: [approvedById], references: [id], onDelete: SetNull)
   approvedAt         DateTime?
   rejectedReason     String?
+  signature          String?
   assetReturn        AssetReturn?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -136,4 +137,15 @@ model AuditLog {
   oldData    Json?
   newData    Json?
   createdAt  DateTime @default(now())
+}
+
+model SystemSetting {
+  id                      String   @id @default("default-settings-id")
+  companyNameTh           String   @default("บริษัท ไทย อินเตอร์ ฟลายอิ้ง จำกัด")
+  companyNameEn           String   @default("Thai Inter Flying Co., Ltd.")
+  businessType            String   @default("สถาบันฝึกอบรมการบิน / Aviation Training Academy")
+  contactEmail            String   @default("info@thaiinterflying.com")
+  maxBorrowDays           Int      @default(7)
+  autoMaintenanceOnDamaged Boolean  @default(true)
+  updatedAt               DateTime @updatedAt
 }

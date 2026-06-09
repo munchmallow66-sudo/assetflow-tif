@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+@variant dark (&:where(.dark-theme, .dark-theme *));
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
@@ -26,7 +28,53 @@
   --card: #1e293b;
   --card-foreground: #f8fafc;
   --border: #334155;
-  --input: #1e293b;
+  --input: #0f172a;
+  
+  /* Global selector overrides for tailwind classes in dark theme */
+  .bg-white {
+    background-color: var(--card) !important;
+  }
+  .bg-slate-50 {
+    background-color: var(--background) !important;
+  }
+  .border-slate-100, .border-slate-200 {
+    border-color: var(--border) !important;
+  }
+  .text-slate-800 {
+    color: var(--foreground) !important;
+  }
+  .text-slate-700 {
+    color: #e2e8f0 !important;
+  }
+  .text-slate-600 {
+    color: #cbd5e1 !important;
+  }
+  .text-slate-500 {
+    color: #94a3b8 !important;
+  }
+  .text-slate-400 {
+    color: #64748b !important;
+  }
+  
+  /* Inputs, selects, and textareas */
+  input, select, textarea {
+    background-color: var(--input) !important;
+    border-color: var(--border) !important;
+    color: var(--foreground) !important;
+  }
+  
+  /* Tables */
+  tr.bg-slate-50, thead tr.bg-slate-50 {
+    background-color: #1e293b !important;
+  }
+  tbody tr:hover {
+    background-color: rgba(51, 65, 85, 0.3) !important;
+  }
+  
+  /* App layout container */
+  div.bg-slate-50 {
+    background-color: var(--background) !important;
+  }
 }
 
 body {

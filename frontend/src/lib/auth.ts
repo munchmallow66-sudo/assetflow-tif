@@ -19,7 +19,7 @@ export async function signToken(payload: JwtPayload): Promise<string> {
   let expiresIn: string | number = '1d';
   
   if (process.env.JWT_EXPIRES_IN) {
-    let envVal = process.env.JWT_EXPIRES_IN.trim().replace(/^['"]|['"]$/g, '');
+    const envVal = process.env.JWT_EXPIRES_IN.trim().replace(/^['"]|['"]$/g, '');
     if (/^\d+$/.test(envVal)) {
       expiresIn = Math.floor(Date.now() / 1000) + parseInt(envVal, 10);
     } else {

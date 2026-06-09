@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
         expectedReturnDate: new Date(dto.expectedReturnDate),
         purpose: dto.purpose,
         status: BorrowStatus.PENDING,
+        signature: dto.signature || null,
       },
       include: { asset: true, borrower: true },
     });

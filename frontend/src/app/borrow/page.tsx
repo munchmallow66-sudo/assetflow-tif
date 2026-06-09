@@ -5,6 +5,7 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import api from '@/lib/api';
 import { ClipboardList, PlusCircle, Check, X, AlertCircle, FileText, Ban, Eye, Undo2 } from 'lucide-react';
 import Link from 'next/link';
+import { TableSkeleton } from '@/components/common/Skeleton';
 
 interface BorrowRequest {
   id: string;
@@ -162,9 +163,7 @@ export default function BorrowPage() {
 
       {/* Requests Table */}
       {loading ? (
-        <div className="flex items-center justify-center min-h-[30vh]">
-          <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-        </div>
+        <TableSkeleton rows={6} cols={7} />
       ) : displayList.length === 0 ? (
         <div className="bg-white border border-slate-100 rounded-2xl p-12 text-center text-slate-400 shadow-sm">
           <ClipboardList size={40} className="mx-auto text-slate-300 mb-3" />

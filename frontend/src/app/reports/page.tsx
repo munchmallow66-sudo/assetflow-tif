@@ -8,9 +8,29 @@ import {
   AlertTriangle,
   User,
   Box,
-  ChevronRight,
-  TrendingDown
+  Download,
+  Printer
 } from 'lucide-react';
+
+const exportToCSV = (data: any[], headers: string[], rowMapper: (item: any) => string[], fileName: string) => {
+  const csvContent = [
+    headers.join(','),
+    ...data.map(item => rowMapper(item).map(val => {
+      const stringVal = String(val === null || val === undefined ? '' : val);
+      return `"${stringVal.replace(/"/g, '""')}"`;
+    }).join(','))
+  ].join('\r\n');
+
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${fileName}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
 export default function ReportsPage() {
   const [reportType, setReportType] = useState<'borrowed' | 'overdue' | 'damaged' | 'employee' | 'asset'>('borrowed');
@@ -105,6 +125,88 @@ export default function ReportsPage() {
     }
   };
 
+  const handlePrint = () => {
+    if (typeof window !== 'undefined') {
+      window.print();
+    }
+  };
+
+  const exportBorrowedCsv = () => {
+    const headers = ['รหัสสินทรัพย์', 'ชื่อสินทรัพย์', 'หมวดหมู่', 'ผู้ยืมปัจจุบัน', 'แผนก'];
+    const rowMapper = (item: any) => [
+      item.assetCode,
+      item.name,
+      item.category,
+      item.currentHolder ? `${item.currentHolder.firstName} ${item.currentHolder.lastName}` : 'ไม่มี',
+      item.currentHolder?.department || ''
+    ];
+    exportToCSV(borrowedData, headers, rowMapper, `รายงานสินทรัพย์ที่ถูกยืมอยู่ในขณะนี้_${new Date().toLocaleDateString('th-TH')}`);
+  };
+
+  const exportOverdueCsv = () => {
+    const headers = ['เลขที่คำขอ', 'รหัสสินทรัพย์', 'ชื่อสินทรัพย์', 'ผู้ยืม', 'แผนก', 'วันที่ยืม', 'กำหนดส่งคืน', 'จำนวนวันเลยกำหนด'];
+    const rowMapper = (item: any) => {
+      const delayDays = Math.floor((Date.now() - new Date(item.expectedReturnDate).getTime()) / 86400000);
+      return [
+        item.requestNo,
+        item.asset.assetCode,
+        item.asset.name,
+        `${item.borrower.firstName} ${item.borrower.lastName}`,
+        item.borrower.department,
+        new Date(item.borrowDate).toLocaleDateString('th-TH'),
+        new Date(item.expectedReturnDate).toLocaleDateString('th-TH'),
+        delayDays > 0 ? `${delayDays} วัน` : 'วันนี้'
+      ];
+    };
+    exportToCSV(overdueData, headers, rowMapper, `รายงานรายการค้างส่งคืน_${new Date().toLocaleDateString('th-TH')}`);
+  };
+
+  const exportDamagedCsv = () => {
+    const headers = ['วันที่ส่งคืน', 'รหัสสินทรัพย์', 'ชื่อสินทรัพย์', 'ผู้คืน', 'แผนกผู้ยืม', 'ผู้บันทึกการคืน', 'รายละเอียดความเสียหาย'];
+    const rowMapper = (item: any) => [
+      new Date(item.returnDate).toLocaleDateString('th-TH'),
+      item.asset.assetCode,
+      item.asset.name,
+      `${item.borrowRequest.borrower.firstName} ${item.borrowRequest.borrower.lastName}`,
+      item.borrowRequest.borrower.department,
+      item.recordedBy.name,
+      item.conditionNote || 'ชำรุดเสียหาย'
+    ];
+    exportToCSV(damagedData, headers, rowMapper, `รายงานประวัติสินทรัพย์เสียหาย_${new Date().toLocaleDateString('th-TH')}`);
+  };
+
+  const exportEmployeeHistoryCsv = () => {
+    const activeEmployee = employees.find(e => e.id === selectedEmployeeId);
+    const empName = activeEmployee ? `${activeEmployee.firstName}_${activeEmployee.lastName}` : 'พนักงาน';
+    const headers = ['เลขที่คำขอ', 'รหัสสินทรัพย์', 'ชื่อสินทรัพย์', 'วันที่ยืม', 'กำหนดส่งคืน', 'สถานะคำขอ', 'สภาพขากลับ'];
+    const rowMapper = (item: any) => [
+      item.requestNo,
+      item.asset.assetCode,
+      item.asset.name,
+      new Date(item.borrowDate).toLocaleDateString('th-TH'),
+      new Date(item.expectedReturnDate).toLocaleDateString('th-TH'),
+      item.status,
+      item.assetReturn ? getConditionText(item.assetReturn.condition) : '-'
+    ];
+    exportToCSV(employeeHistory, headers, rowMapper, `รายงานประวัติการยืม_${empName}_${new Date().toLocaleDateString('th-TH')}`);
+  };
+
+  const exportAssetHistoryCsv = () => {
+    const activeAsset = assets.find(a => a.id === selectedAssetId);
+    const assetCode = activeAsset ? activeAsset.assetCode : 'อุปกรณ์';
+    const headers = ['เลขที่คำขอ', 'ผู้ยืมใช้งาน', 'แผนกผู้ยืม', 'วันที่ยืม', 'กำหนดส่งคืน', 'สถานะรายการ', 'สภาพครุภัณฑ์ขากลับ'];
+    const rowMapper = (item: any) => [
+      item.requestNo,
+      `${item.borrower.firstName} ${item.borrower.lastName}`,
+      item.borrower.department,
+      new Date(item.borrowDate).toLocaleDateString('th-TH'),
+      new Date(item.expectedReturnDate).toLocaleDateString('th-TH'),
+      item.status,
+      item.assetReturn ? getConditionText(item.assetReturn.condition) : '-'
+    ];
+    exportToCSV(assetHistory, headers, rowMapper, `รายงานประวัติการใช้งานสินทรัพย์_${assetCode}_${new Date().toLocaleDateString('th-TH')}`);
+  };
+
   return (
     <div className="space-y-6">
       {/* Title */}
@@ -187,7 +289,27 @@ export default function ReportsPage() {
           {/* 1. Borrowed Assets */}
           {reportType === 'borrowed' && (
             <div className="space-y-4">
-              <h2 className="text-base font-bold text-slate-800">สินทรัพย์ที่ถูกยืมอยู่ในขณะนี้</h2>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4 print:border-none">
+                <h2 className="text-base font-bold text-slate-800">สินทรัพย์ที่ถูกยืมอยู่ในขณะนี้</h2>
+                <div className="flex gap-2 print:hidden">
+                  <button
+                    onClick={exportBorrowedCsv}
+                    disabled={borrowedData.length === 0}
+                    className="px-3 py-1.5 bg-slate-105 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <Download size={14} className="text-sky-500" />
+                    <span>ส่งออก CSV</span>
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    disabled={borrowedData.length === 0}
+                    className="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shadow-md shadow-sky-500/10 cursor-pointer disabled:opacity-50"
+                  >
+                    <Printer size={14} />
+                    <span>พิมพ์รายงาน</span>
+                  </button>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
@@ -218,7 +340,27 @@ export default function ReportsPage() {
           {/* 2. Overdue Assets */}
           {reportType === 'overdue' && (
             <div className="space-y-4">
-              <h2 className="text-base font-bold text-slate-800">รายการสินทรัพย์ค้างส่งคืน (เลยกำหนด)</h2>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4 print:border-none">
+                <h2 className="text-base font-bold text-slate-800">รายการสินทรัพย์ค้างส่งคืน (เลยกำหนด)</h2>
+                <div className="flex gap-2 print:hidden">
+                  <button
+                    onClick={exportOverdueCsv}
+                    disabled={overdueData.length === 0}
+                    className="px-3 py-1.5 bg-slate-105 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <Download size={14} className="text-sky-500" />
+                    <span>ส่งออก CSV</span>
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    disabled={overdueData.length === 0}
+                    className="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shadow-md shadow-sky-500/10 cursor-pointer disabled:opacity-50"
+                  >
+                    <Printer size={14} />
+                    <span>พิมพ์รายงาน</span>
+                  </button>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
@@ -254,7 +396,27 @@ export default function ReportsPage() {
           {/* 3. Damaged Assets */}
           {reportType === 'damaged' && (
             <div className="space-y-4">
-              <h2 className="text-base font-bold text-slate-800">ประวัติบันทึกสินทรัพย์เสียหายตอนส่งคืน</h2>
+              <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-4 print:border-none">
+                <h2 className="text-base font-bold text-slate-800">ประวัติบันทึกสินทรัพย์เสียหายตอนส่งคืน</h2>
+                <div className="flex gap-2 print:hidden">
+                  <button
+                    onClick={exportDamagedCsv}
+                    disabled={damagedData.length === 0}
+                    className="px-3 py-1.5 bg-slate-105 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <Download size={14} className="text-sky-500" />
+                    <span>ส่งออก CSV</span>
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    disabled={damagedData.length === 0}
+                    className="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shadow-md shadow-sky-500/10 cursor-pointer disabled:opacity-50"
+                  >
+                    <Printer size={14} />
+                    <span>พิมพ์รายงาน</span>
+                  </button>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
@@ -285,20 +447,40 @@ export default function ReportsPage() {
           {/* 4. Employee History */}
           {reportType === 'employee' && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <h2 className="text-base font-bold text-slate-800">ประวัติการขอยืมรายพนักงาน</h2>
-                <select
-                  value={selectedEmployeeId}
-                  onChange={handleEmployeeSearch}
-                  className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-sky-500 max-w-xs"
-                >
-                  <option value="">-- เลือกพนักงาน --</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      [{emp.employeeCode}] {emp.firstName} {emp.lastName} ({emp.department})
-                    </option>
-                  ))}
-                </select>
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-3 border-b border-slate-100 mb-4 print:border-none">
+                <div className="space-y-0.5">
+                  <h2 className="text-base font-bold text-slate-800">ประวัติการขอยืมรายพนักงาน</h2>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 print:hidden">
+                  <select
+                    value={selectedEmployeeId}
+                    onChange={handleEmployeeSearch}
+                    className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-sky-500 max-w-xs"
+                  >
+                    <option value="">-- เลือกพนักงาน --</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        [{emp.employeeCode}] {emp.firstName} {emp.lastName} ({emp.department})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={exportEmployeeHistoryCsv}
+                    disabled={employeeHistory.length === 0}
+                    className="px-3 py-1.5 bg-slate-105 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <Download size={14} className="text-sky-500" />
+                    <span>ส่งออก CSV</span>
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    disabled={employeeHistory.length === 0}
+                    className="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shadow-md shadow-sky-500/10 cursor-pointer disabled:opacity-50"
+                  >
+                    <Printer size={14} />
+                    <span>พิมพ์รายงาน</span>
+                  </button>
+                </div>
               </div>
 
               {!selectedEmployeeId ? (
@@ -341,20 +523,40 @@ export default function ReportsPage() {
           {/* 5. Asset History */}
           {reportType === 'asset' && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-                <h2 className="text-base font-bold text-slate-800">ประวัติการใช้งานและหมุนเวียนสินทรัพย์</h2>
-                <select
-                  value={selectedAssetId}
-                  onChange={handleAssetSearch}
-                  className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-sky-500 max-w-xs"
-                >
-                  <option value="">-- เลือกสินทรัพย์ --</option>
-                  {assets.map((ast) => (
-                    <option key={ast.id} value={ast.id}>
-                      [{ast.assetCode}] {ast.name}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-3 border-b border-slate-100 mb-4 print:border-none">
+                <div className="space-y-0.5">
+                  <h2 className="text-base font-bold text-slate-800">ประวัติการใช้งานและหมุนเวียนสินทรัพย์</h2>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 print:hidden">
+                  <select
+                    value={selectedAssetId}
+                    onChange={handleAssetSearch}
+                    className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-sky-500 max-w-xs"
+                  >
+                    <option value="">-- เลือกสินทรัพย์ --</option>
+                    {assets.map((ast) => (
+                      <option key={ast.id} value={ast.id}>
+                        [{ast.assetCode}] {ast.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={exportAssetHistoryCsv}
+                    disabled={assetHistory.length === 0}
+                    className="px-3 py-1.5 bg-slate-105 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <Download size={14} className="text-sky-500" />
+                    <span>ส่งออก CSV</span>
+                  </button>
+                  <button
+                    onClick={handlePrint}
+                    disabled={assetHistory.length === 0}
+                    className="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-1.5 shadow-md shadow-sky-500/10 cursor-pointer disabled:opacity-50"
+                  >
+                    <Printer size={14} />
+                    <span>พิมพ์รายงาน</span>
+                  </button>
+                </div>
               </div>
 
               {!selectedAssetId ? (
@@ -396,6 +598,35 @@ export default function ReportsPage() {
 
         </div>
       )}
+
+      {/* Custom style injection for printing behavior */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          /* Hide app sidebar, layout, and print control header */
+          aside, 
+          .lg\\:hidden,
+          .print\\:hidden,
+          .grid.grid-cols-2.md\\:grid-cols-5 {
+            display: none !important;
+          }
+          /* Reset Next.js layout padding */
+          .lg\\:pl-64 {
+            padding-left: 0 !important;
+          }
+          main {
+            padding: 0 !important;
+            margin: 0 !important;
+          }
+          body {
+            background: white !important;
+            background-color: white !important;
+          }
+          /* Hide title section and keep active table */
+          .space-y-6 > div:first-child {
+            display: none !important;
+          }
+        }
+      `}} />
     </div>
   );
 }

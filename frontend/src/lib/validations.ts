@@ -89,6 +89,7 @@ export const createBorrowRequestSchema = z.object({
   borrowDate: z.string().min(1, 'กรุณาระบุวันที่ขอยืม'),
   expectedReturnDate: z.string().min(1, 'กรุณาระบุวันที่คาดว่าจะส่งคืน'),
   purpose: z.string().min(1, 'กรุณาระบุวัตถุประสงค์ในการยืม'),
+  signature: z.string().optional(),
 });
 
 export const rejectRequestSchema = z.object({
@@ -103,6 +104,17 @@ export const createReturnSchema = z.object({
   conditionNote: z.string().optional(),
   imageUrl: z.string().optional(),
   cloudinaryPublicId: z.string().optional(),
+});
+
+// =================== Settings ===================
+
+export const systemSettingsSchema = z.object({
+  companyNameTh: z.string().min(1, 'กรุณากรอกชื่อบริษัทภาษาไทย'),
+  companyNameEn: z.string().min(1, 'กรุณากรอกชื่อบริษัทภาษาอังกฤษ'),
+  businessType: z.string().min(1, 'กรุณากรอกประเภทธุรกิจ'),
+  contactEmail: z.string().email('อีเมลติดต่อหลักไม่ถูกต้อง').min(1, 'กรุณากรอกอีเมลติดต่อหลัก'),
+  maxBorrowDays: z.number().int().min(1, 'จำนวนวันต้องมากกว่า 0'),
+  autoMaintenanceOnDamaged: z.boolean(),
 });
 
 // =================== Helper ===================
