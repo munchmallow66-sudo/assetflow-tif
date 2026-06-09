@@ -15,7 +15,7 @@ export const contentType = 'image/png';
 export default async function Image() {
   // Fetch Kanit font for Thai support
   const fontData = await fetch(
-    new URL('https://fonts.gstatic.com/s/kanit/v15/nqyYS-WS2sg74k40a8utb_o.ttf')
+    new URL('https://github.com/google/fonts/raw/main/ofl/kanit/Kanit-SemiBold.ttf')
   ).then((res) => res.arrayBuffer());
 
   // Load logo using fetch on import.meta.url (supports Edge runtime)
