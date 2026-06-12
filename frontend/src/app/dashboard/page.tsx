@@ -64,10 +64,10 @@ export default function DashboardPage() {
       try {
         const [statsRes, requestsRes] = await Promise.all([
           api.get('/reports/dashboard'),
-          api.get('/borrow-requests')
+          api.get('/borrow-requests?limit=5')
         ]);
         setStats(statsRes.data);
-        setRecentRequests(requestsRes.data.slice(0, 5));
+        setRecentRequests(requestsRes.data);
       } catch (err: any) {
         setError('ไม่สามารถดึงข้อมูลสถิติแดชบอร์ดได้');
       } finally {

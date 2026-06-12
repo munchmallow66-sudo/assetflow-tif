@@ -11,6 +11,10 @@ export async function GET(request: NextRequest) {
     const user = await getAuthUser(request);
     if (!user) return unauthorized();
 
+    const { searchParams } = new URL(request.url);
+    const limitParam = searchParams.get('limit');
+    const take = limitParam ? parseInt(limitParam, 10) : undefined;
+
     // Staff can only view their own requests
     const where: any = {};
     if (user.role === Role.STAFF && user.employeeId) {
@@ -27,6 +31,7 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: 'desc' },
+      ...(take && !isNaN(take) ? { take } : {}),
     });
     return NextResponse.json(requests);
   } catch (error: any) {

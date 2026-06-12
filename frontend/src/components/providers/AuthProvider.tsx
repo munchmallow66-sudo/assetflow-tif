@@ -48,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
+        setLoading(false);
         try {
           const res = await api.get('/auth/me');
           setUser(res.data);
@@ -58,8 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null);
           setToken(null);
         }
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     initAuth();
