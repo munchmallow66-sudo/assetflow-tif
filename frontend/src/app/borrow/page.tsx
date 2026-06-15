@@ -26,6 +26,13 @@ interface BorrowRequest {
     lastName: string;
     department: string;
   };
+  assetReturn?: {
+    id: string;
+    returnDate: string;
+    condition: 'NORMAL' | 'DAMAGED' | 'LOST' | 'INCOMPLETE';
+    conditionNote?: string | null;
+    imageUrl?: string | null;
+  } | null;
 }
 
 export default function BorrowPage() {
@@ -33,6 +40,7 @@ export default function BorrowPage() {
   const [requests, setRequests] = useState<BorrowRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
+  const [selectedReturn, setSelectedReturn] = useState<BorrowRequest | null>(null);
 
   const fetchRequests = async () => {
     try {
@@ -252,22 +260,14 @@ export default function BorrowPage() {
 
                         {/* Return approval actions for ADMIN */}
                         {item.status === 'RETURN_PENDING' && user?.role === 'ADMIN' && (
-                          <>
-                            <button
-                              onClick={() => handleApproveReturn(item.id, item.requestNo)}
-                              className="p-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer"
-                              title="อนุมัติการคืนของ"
-                            >
-                              <Check size={14} />
-                            </button>
-                            <button
-                              onClick={() => handleRejectReturn(item.id, item.requestNo)}
-                              className="p-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors cursor-pointer"
-                              title="ปฏิเสธการคืนของ"
-                            >
-                              <X size={14} />
-                            </button>
-                          </>
+                          <button
+                            onClick={() => setSelectedReturn(item)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-50 text-sky-600 border border-sky-200 rounded-lg hover:bg-sky-100 transition-colors cursor-pointer text-[10px] font-bold"
+                            title="ตรวจสอบสภาพส่งคืน"
+                          >
+                            <Eye size={12} />
+                            <span>ตรวจสภาพส่งคืน</span>
+                          </button>
                         )}
 
                         {/* Staff can cancel their own pending request */}
@@ -308,6 +308,131 @@ export default function BorrowPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Return Details Modal */}
+      {selectedReturn && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-850 p-6 rounded-3xl shadow-xl max-w-md w-full relative flex flex-col gap-5">
+            {/* Header */}
+            <div className="flex items-center justify-between pb-3 border-b dark:border-slate-800">
+              <div className="flex items-center gap-2 text-sky-500">
+                <FileText size={18} />
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white">รายละเอียดการส่งคืนครุภัณฑ์</h3>
+              </div>
+              <button
+                onClick={() => setSelectedReturn(null)}
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+              {/* Asset Info */}
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-950/30 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                <div>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase">สินทรัพย์</p>
+                  <p className="text-xs font-bold text-slate-800 dark:text-white mt-0.5">{selectedReturn.asset.name}</p>
+                  <p className="text-[9px] text-slate-455 font-mono mt-0.5">{selectedReturn.asset.assetCode}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 font-semibold uppercase">ผู้ส่งคืน</p>
+                  <p className="text-xs font-bold text-slate-800 dark:text-white mt-0.5">
+                    {selectedReturn.borrower.firstName} {selectedReturn.borrower.lastName}
+                  </p>
+                  <p className="text-[9px] text-slate-455 mt-0.5">ฝ่าย: {selectedReturn.borrower.department}</p>
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <p className="text-[10px] text-slate-400 font-semibold">วันที่ยืม</p>
+                  <p className="font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
+                    {new Date(selectedReturn.borrowDate).toLocaleDateString('th-TH')}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 font-semibold">กำหนดส่งคืน</p>
+                  <p className="font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
+                    {new Date(selectedReturn.expectedReturnDate).toLocaleDateString('th-TH')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Return Condition reported */}
+              <div className="space-y-2 pt-2 border-t dark:border-slate-800">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">สภาพครุภัณฑ์ที่รายงาน:</span>
+                  <span className="text-xs">
+                    {selectedReturn.assetReturn && getStatusBadge(selectedReturn.assetReturn.condition)}
+                  </span>
+                </div>
+                
+                {/* Notes */}
+                {selectedReturn.assetReturn?.conditionNote && (
+                  <div className="bg-slate-50 dark:bg-slate-950/20 p-3 rounded-xl border border-slate-100 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <p className="font-semibold text-slate-450 text-[10px] mb-1">หมายเหตุ/ข้อมูลชำรุด:</p>
+                    {selectedReturn.assetReturn.conditionNote}
+                  </div>
+                )}
+
+                {/* Evidence Image */}
+                {selectedReturn.assetReturn?.imageUrl ? (
+                  <div className="space-y-1">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase">รูปภาพหลักฐานสภาพเครื่อง:</p>
+                    <div className="h-44 w-full border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-950 flex items-center justify-center relative">
+                      <a href={selectedReturn.assetReturn.imageUrl} target="_blank" rel="noreferrer" className="w-full h-full block">
+                        <img
+                          src={selectedReturn.assetReturn.imageUrl}
+                          alt="Evidence Photo"
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer"
+                        />
+                      </a>
+                    </div>
+                    <p className="text-[9px] text-slate-400 text-center mt-1">คลิกที่รูปภาพเพื่อดูภาพขนาดเต็ม</p>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-slate-455 italic bg-slate-50/50 dark:bg-slate-950/20 py-2 px-3 rounded-lg border border-dashed dark:border-slate-800 text-center">
+                    ไม่มีรูปถ่ายแนบมาด้วย
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="pt-4 border-t dark:border-slate-800 flex justify-end gap-3">
+              <button
+                onClick={() => setSelectedReturn(null)}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+              >
+                ปิดหน้าต่าง
+              </button>
+              <button
+                onClick={async () => {
+                  const reqNo = selectedReturn.requestNo;
+                  setSelectedReturn(null);
+                  await handleRejectReturn(selectedReturn.id, reqNo);
+                }}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold shadow-md shadow-red-500/10 transition-colors cursor-pointer"
+              >
+                ปฏิเสธการคืน
+              </button>
+              <button
+                onClick={async () => {
+                  const reqNo = selectedReturn.requestNo;
+                  setSelectedReturn(null);
+                  await handleApproveReturn(selectedReturn.id, reqNo);
+                }}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-500/10 transition-colors cursor-pointer"
+              >
+                อนุมัติรับคืน
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -56,26 +56,37 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentRequests, setRecentRequests] = useState<RecentBorrowRequest[]>([]);
+  const [activeBorrows, setActiveBorrows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [statsRes, requestsRes] = await Promise.all([
+        const [statsRes, requestsRes, allRequestsRes] = await Promise.all([
           api.get('/reports/dashboard'),
-          api.get('/borrow-requests?limit=5')
+          api.get('/borrow-requests?limit=5'),
+          api.get('/borrow-requests')
         ]);
         setStats(statsRes.data);
         setRecentRequests(requestsRes.data);
+
+        // Filter user's active borrows (BORROWED or OVERDUE)
+        const myActive = allRequestsRes.data.filter((r: any) => 
+          (r.status === 'BORROWED' || r.status === 'OVERDUE') && 
+          (user?.employeeId ? r.borrowerId === user.employeeId : false)
+        );
+        setActiveBorrows(myActive);
       } catch (err: any) {
         setError('ไม่สามารถดึงข้อมูลสถิติแดชบอร์ดได้');
       } finally {
         setLoading(false);
       }
     };
-    fetchDashboardData();
-  }, []);
+    if (user) {
+      fetchDashboardData();
+    }
+  }, [user]);
 
   if (loading) {
     return (
@@ -184,6 +195,40 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Active Borrows Shortcut (Staff/User convenience widget) */}
+      {activeBorrows.length > 0 && (
+        <div className="bg-amber-500/5 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-900/50 p-6 rounded-3xl space-y-4 shadow-sm animate-fade-in">
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <Clock className="animate-pulse" size={18} />
+            <h3 className="text-xs font-bold uppercase tracking-wider">สินทรัพย์ที่คุณกำลังยืมใช้งานอยู่ ({activeBorrows.length})</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeBorrows.map((item) => {
+              const isOverdue = item.status === 'OVERDUE';
+              return (
+                <div key={item.id} className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl flex items-center justify-between gap-4 shadow-sm">
+                  <div className="overflow-hidden">
+                    <p className="font-bold text-xs text-slate-800 dark:text-white truncate">{item.asset.name}</p>
+                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">รหัส: {item.asset.assetCode}</p>
+                    <p className="text-[10px] text-slate-455 mt-1 flex items-center gap-1">
+                      <span>กำหนดคืน: {new Date(item.expectedReturnDate).toLocaleDateString('th-TH')}</span>
+                      {isOverdue && <span className="px-1.5 py-0.2 bg-red-50 text-red-500 rounded border border-red-200 text-[8px] font-bold">เลยกำหนดคืน!</span>}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/returns/new?requestId=${item.id}`}
+                    className="shrink-0 flex items-center gap-1 bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-xl font-bold text-[10px] shadow-sm shadow-emerald-500/15 cursor-pointer transition-all hover:scale-[1.02] active:scale-95 text-sans"
+                  >
+                    <Undo2 size={12} />
+                    <span>คืนครุภัณฑ์</span>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

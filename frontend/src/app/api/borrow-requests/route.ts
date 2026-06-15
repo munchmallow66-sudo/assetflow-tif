@@ -29,6 +29,7 @@ export async function GET(request: NextRequest) {
         approvedBy: {
           select: { id: true, name: true, email: true },
         },
+        assetReturn: true,
       },
       orderBy: { createdAt: 'desc' },
       ...(take && !isNaN(take) ? { take } : {}),
