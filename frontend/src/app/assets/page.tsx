@@ -220,6 +220,16 @@ export default function AssetsPage() {
                     <span>ดูรายละเอียด</span>
                   </Link>
 
+                  {asset.status === 'AVAILABLE' && (user?.role === 'STAFF' || user?.role === 'ADMIN' || user?.role === 'APPROVER') && (
+                    <Link
+                      href={`/borrow/new?assetId=${asset.id}`}
+                      className="flex-1 flex items-center justify-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors cursor-pointer shadow-sm shadow-sky-500/10"
+                    >
+                      <Plus size={14} />
+                      <span>ยืมของ</span>
+                    </Link>
+                  )}
+
                   {user?.role === 'ADMIN' && (
                     <>
                       <Link

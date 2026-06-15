@@ -11,7 +11,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   try {
     const user = await getAuthUser(request);
     if (!user) return unauthorized();
-    const roleError = requireRoles(user, Role.STAFF, Role.ADMIN);
+    const roleError = requireRoles(user, Role.STAFF, Role.ADMIN, Role.APPROVER);
     if (roleError) return roleError;
 
     const { id } = await params;

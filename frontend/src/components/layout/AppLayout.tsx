@@ -203,8 +203,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* User action options */}
             <div className="space-y-2 pt-2 border-t dark:border-slate-800">
-              {/* Option 1: Borrow (If available and user is STAFF/ADMIN) */}
-              {scannedAsset.status === 'AVAILABLE' && (user.role === 'STAFF' || user.role === 'ADMIN') && (
+              {/* Option 1: Borrow (If available and user is STAFF/ADMIN/APPROVER) */}
+              {scannedAsset.status === 'AVAILABLE' && (user.role === 'STAFF' || user.role === 'ADMIN' || user.role === 'APPROVER') && (
                 <button
                   onClick={() => {
                     setScannedAsset(null);

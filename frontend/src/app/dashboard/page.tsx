@@ -184,7 +184,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="shrink-0 flex gap-3 z-10">
-          {(user?.role === 'STAFF' || user?.role === 'ADMIN') && (
+          {(user?.role === 'STAFF' || user?.role === 'ADMIN' || user?.role === 'APPROVER') && (
             <Link
               href="/borrow/new"
               className="bg-white text-sky-600 hover:bg-sky-50 px-5 py-3 rounded-2xl font-bold text-xs shadow-lg transition-all duration-200 flex items-center gap-2"
@@ -384,6 +384,13 @@ export default function DashboardPage() {
               {user?.role === 'ADMIN' && (
                 <>
                   <Link
+                    href="/borrow/new"
+                    className="flex items-center justify-center gap-3 px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold text-xs transition-all duration-200 shadow-md shadow-sky-500/10"
+                  >
+                    <PlusCircle size={16} />
+                    <span>สร้างคำขอยืมสินทรัพย์</span>
+                  </Link>
+                  <Link
                     href="/returns/new"
                     className="flex items-center gap-3 px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl hover:bg-sky-50 hover:border-sky-200 text-slate-700 hover:text-sky-700 font-medium text-xs transition-all duration-200"
                   >
@@ -430,6 +437,13 @@ export default function DashboardPage() {
               {/* APPROVER actions */}
               {user?.role === 'APPROVER' && (
                 <>
+                  <Link
+                    href="/borrow/new"
+                    className="flex items-center justify-center gap-3 px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold text-xs transition-all duration-200 shadow-md shadow-sky-500/10"
+                  >
+                    <PlusCircle size={16} />
+                    <span>สร้างคำขอยืมสินทรัพย์</span>
+                  </Link>
                   <Link
                     href="/borrow"
                     className="flex items-center gap-3 px-4 py-3 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold text-xs transition-all duration-200 shadow-md shadow-sky-500/10 justify-center"

@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getAuthUser(request);
     if (!user) return unauthorized();
-    const roleError = requireRoles(user, Role.STAFF, Role.ADMIN);
+    const roleError = requireRoles(user, Role.STAFF, Role.ADMIN, Role.APPROVER);
     if (roleError) return roleError;
 
     const body = await request.json();

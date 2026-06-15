@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
   try {
     const user = await getAuthUser(request);
     if (!user) return unauthorized();
-    const roleError = requireRoles(user, Role.ADMIN, Role.STAFF);
+    const roleError = requireRoles(user, Role.ADMIN, Role.STAFF, Role.APPROVER);
     if (roleError) return roleError;
 
     const body = await request.json();
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'ไม่พบข้อมูลการยืมที่ระบุ' }, { status: 404 });
     }
 
-    if (user.role === Role.STAFF && borrowRequest.borrowerId !== user.employeeId) {
+    if ((user.role === Role.STAFF || user.role === Role.APPROVER) && borrowRequest.borrowerId !== user.employeeId) {
       return NextResponse.json({ message: 'คุณไม่มีสิทธิ์คืนสินทรัพย์ของผู้อื่น' }, { status: 403 });
     }
 

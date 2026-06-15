@@ -321,7 +321,7 @@ export default function BorrowPage() {
               ประวัติการทำรายการยื่นขอยืม คืนสภาพ และพิจารณาอนุมัติครุภัณฑ์การบินของสถาบันฯ
             </p>
           </div>
-          {(user?.role === 'STAFF' || user?.role === 'ADMIN') && (
+          {(user?.role === 'STAFF' || user?.role === 'ADMIN' || user?.role === 'APPROVER') && (
             <Link
               href="/borrow/new"
               className="flex items-center justify-center gap-2 bg-gradient-to-r from-sky-400 via-sky-500 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-sky-500/20 cursor-pointer transition-all hover:scale-[1.03] active:scale-95 duration-200 hover:shadow-indigo-500/30"

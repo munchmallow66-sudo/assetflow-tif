@@ -14,7 +14,8 @@ import {
   AlertCircle,
   Clock,
   ClipboardCheck,
-  Edit2
+  Edit2,
+  PlusCircle
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -162,15 +163,26 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
           <ArrowLeft size={16} />
           <span>ย้อนกลับไปหน้าสินทรัพย์</span>
         </Link>
-        {user?.role === 'ADMIN' && (
-          <Link
-            href={`/assets/${asset.id}/edit`}
-            className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-amber-500/10 cursor-pointer transition-all hover:scale-[1.02] active:scale-95 duration-200"
-          >
-            <Edit2 size={14} />
-            <span>แก้ไขข้อมูลสินทรัพย์</span>
-          </Link>
-        )}
+        <div className="flex gap-2">
+          {asset.status === 'AVAILABLE' && (user?.role === 'STAFF' || user?.role === 'ADMIN' || user?.role === 'APPROVER') && (
+            <Link
+              href={`/borrow/new?assetId=${asset.id}`}
+              className="flex items-center gap-2 bg-gradient-to-r from-sky-400 via-sky-500 to-indigo-500 hover:from-sky-500 hover:to-indigo-650 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-sky-500/10 cursor-pointer transition-all hover:scale-[1.02] active:scale-95 duration-200"
+            >
+              <PlusCircle size={14} />
+              <span>ยื่นขอยืมสินทรัพย์นี้</span>
+            </Link>
+          )}
+          {user?.role === 'ADMIN' && (
+            <Link
+              href={`/assets/${asset.id}/edit`}
+              className="flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-amber-500/10 cursor-pointer transition-all hover:scale-[1.02] active:scale-95 duration-200"
+            >
+              <Edit2 size={14} />
+              <span>แก้ไขข้อมูลสินทรัพย์</span>
+            </Link>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
