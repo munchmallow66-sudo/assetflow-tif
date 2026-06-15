@@ -14,6 +14,7 @@ interface ScannedAsset {
   name: string;
   category: string;
   status: 'AVAILABLE' | 'BORROWED' | 'MAINTENANCE' | 'LOST' | 'RETIRED';
+  currentHolderId?: string | null;
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -219,8 +220,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </button>
               )}
 
-              {/* Option 2: Return (If borrowed/overdue and user is ADMIN) */}
-              {scannedAsset.status === 'BORROWED' && user.role === 'ADMIN' && (
+              {/* Option 2: Return (If borrowed/overdue and user is ADMIN, or user holds the asset) */}
+              {scannedAsset.status === 'BORROWED' && (user.role === 'ADMIN' || (scannedAsset.currentHolderId && scannedAsset.currentHolderId === user.employeeId)) && (
                 <button
                   onClick={() => {
                     setScannedAsset(null);

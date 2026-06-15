@@ -13,7 +13,7 @@ interface BorrowRequest {
   borrowDate: string;
   expectedReturnDate: string;
   purpose: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'BORROWED' | 'RETURNED' | 'OVERDUE' | 'CANCELLED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'BORROWED' | 'RETURN_PENDING' | 'RETURNED' | 'OVERDUE' | 'CANCELLED';
   rejectedReason?: string;
   createdAt: string;
   asset: {
@@ -88,10 +88,34 @@ export default function BorrowPage() {
     }
   };
 
+  const handleApproveReturn = async (id: string, requestNo: string) => {
+    if (!confirm(`ยืนยันการอนุมัติการรับคืนรายการรหัส: ${requestNo}?`)) return;
+    try {
+      await api.patch(`/borrow-requests/${id}/approve-return`);
+      alert('อนุมัติการส่งคืนเรียบร้อยแล้ว');
+      fetchRequests();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'การอนุมัติล้มเหลว');
+    }
+  };
+
+  const handleRejectReturn = async (id: string, requestNo: string) => {
+    if (!confirm(`ยืนยันการปฏิเสธการรับคืนรายการรหัส: ${requestNo}?`)) return;
+    try {
+      await api.patch(`/borrow-requests/${id}/reject-return`);
+      alert('ปฏิเสธการส่งคืนเรียบร้อยแล้ว');
+      fetchRequests();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'การดำเนินการล้มเหลว');
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING':
         return <span className="px-2.5 py-1 text-xs font-bold rounded-md badge-pending">รออนุมัติ</span>;
+      case 'RETURN_PENDING':
+        return <span className="px-2.5 py-1 text-xs font-bold rounded-md badge-pending">รออนุมัติคืน</span>;
       case 'BORROWED':
         return <span className="px-2.5 py-1 text-xs font-bold rounded-md badge-borrowed">กำลังยืม</span>;
       case 'RETURNED':
@@ -108,8 +132,8 @@ export default function BorrowPage() {
   };
 
   // Filter lists based on tab selection and roles
-  const pendingRequests = requests.filter((r) => r.status === 'PENDING');
-  const historyRequests = requests.filter((r) => r.status !== 'PENDING');
+  const pendingRequests = requests.filter((r) => r.status === 'PENDING' || r.status === 'RETURN_PENDING');
+  const historyRequests = requests.filter((r) => r.status !== 'PENDING' && r.status !== 'RETURN_PENDING');
 
   const showTabs = user?.role === 'ADMIN' || user?.role === 'APPROVER';
   const displayList = showTabs 
@@ -226,6 +250,26 @@ export default function BorrowPage() {
                           </>
                         )}
 
+                        {/* Return approval actions for ADMIN */}
+                        {item.status === 'RETURN_PENDING' && user?.role === 'ADMIN' && (
+                          <>
+                            <button
+                              onClick={() => handleApproveReturn(item.id, item.requestNo)}
+                              className="p-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors cursor-pointer"
+                              title="อนุมัติการคืนของ"
+                            >
+                              <Check size={14} />
+                            </button>
+                            <button
+                              onClick={() => handleRejectReturn(item.id, item.requestNo)}
+                              className="p-1.5 bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors cursor-pointer"
+                              title="ปฏิเสธการคืนของ"
+                            >
+                              <X size={14} />
+                            </button>
+                          </>
+                        )}
+
                         {/* Staff can cancel their own pending request */}
                         {item.status === 'PENDING' && user?.role === 'STAFF' && (
                           <button
@@ -246,7 +290,7 @@ export default function BorrowPage() {
                             >
                               <Eye size={14} />
                             </Link>
-                            {user?.role === 'ADMIN' && (item.status === 'BORROWED' || item.status === 'OVERDUE') && (
+                            {(user?.role === 'ADMIN' || user?.role === 'STAFF') && (item.status === 'BORROWED' || item.status === 'OVERDUE') && (
                               <Link
                                 href={`/returns/new?requestId=${item.id}`}
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 border border-emerald-250 rounded-lg transition-colors cursor-pointer font-bold text-[10px]"

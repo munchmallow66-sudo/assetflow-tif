@@ -39,7 +39,7 @@ interface RecentBorrowRequest {
   borrowDate: string;
   expectedReturnDate: string;
   purpose: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'BORROWED' | 'RETURNED' | 'OVERDUE' | 'CANCELLED';
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'BORROWED' | 'RETURN_PENDING' | 'RETURNED' | 'OVERDUE' | 'CANCELLED';
   createdAt: string;
   asset: {
     name: string;
@@ -130,6 +130,7 @@ export default function DashboardPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'PENDING':
+      case 'RETURN_PENDING':
         return <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100"><Clock size={14} /></div>;
       case 'BORROWED':
       case 'APPROVED':
@@ -149,6 +150,7 @@ export default function DashboardPage() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'PENDING': return 'รออนุมัติ';
+      case 'RETURN_PENDING': return 'รออนุมัติคืน';
       case 'APPROVED': return 'อนุมัติแล้ว';
       case 'BORROWED': return 'กำลังยืม';
       case 'RETURNED': return 'คืนแล้ว';
@@ -478,7 +480,7 @@ export default function DashboardPage() {
                   {/* Status badge */}
                   <div className="shrink-0 text-right">
                     <span className={`px-2 py-0.5 text-[9px] font-bold rounded-md uppercase tracking-wider
-                      ${req.status === 'PENDING' ? 'badge-pending' : ''}
+                      ${req.status === 'PENDING' || req.status === 'RETURN_PENDING' ? 'badge-pending' : ''}
                       ${req.status === 'BORROWED' ? 'badge-borrowed' : ''}
                       ${req.status === 'RETURNED' ? 'badge-returned' : ''}
                       ${req.status === 'REJECTED' ? 'badge-rejected' : ''}

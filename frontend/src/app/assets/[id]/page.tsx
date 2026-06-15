@@ -117,6 +117,8 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
     switch (status) {
       case 'PENDING':
         return <span className="px-2 py-0.5 rounded text-[10px] font-semibold badge-pending">รออนุมัติ</span>;
+      case 'RETURN_PENDING':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-semibold badge-pending">รออนุมัติการคืน</span>;
       case 'BORROWED':
         return <span className="px-2 py-0.5 rounded text-[10px] font-semibold badge-borrowed">กำลังยืม</span>;
       case 'RETURNED':

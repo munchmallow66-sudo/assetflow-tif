@@ -85,7 +85,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (pathname.startsWith('/employees') && user.role !== 'ADMIN') {
         router.push('/dashboard');
       }
-      if (pathname.startsWith('/returns/new') && user.role !== 'ADMIN') {
+      if (
+        pathname.startsWith('/returns/new') &&
+        user.role !== 'ADMIN' &&
+        user.role !== 'STAFF' &&
+        user.role !== 'APPROVER'
+      ) {
         router.push('/dashboard');
       }
       if (pathname.startsWith('/borrow/pending') && user.role !== 'ADMIN' && user.role !== 'APPROVER') {
