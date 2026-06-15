@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initAuth = async () => {
       const storedToken = localStorage.getItem('tif_token');
       const storedUser = localStorage.getItem('tif_user');
-      
+
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
@@ -104,14 +104,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await api.post('/auth/login', { email, password });
       const { accessToken, user: userData } = res.data;
-      
+
       localStorage.setItem('tif_token', accessToken);
       localStorage.setItem('tif_user', JSON.stringify(userData));
-      
+
       setToken(accessToken);
       setUser(userData);
       setLoading(false);
-      
+
       router.push('/dashboard');
     } catch (error: any) {
       setLoading(false);

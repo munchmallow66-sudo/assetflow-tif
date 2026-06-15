@@ -16,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="th" className="h-full">
-      <body className="min-h-full antialiased text-slate-900 bg-slate-50 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200">
+    <html lang="th" className="h-full" suppressHydrationWarning>
+      <body className="min-h-full antialiased text-slate-900 bg-slate-50 dark:bg-slate-955 dark:text-slate-100 transition-colors duration-200">
         <ThemeProvider>
           <AuthProvider>
             <AppLayout>{children}</AppLayout>

@@ -33,7 +33,7 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  
+
   const { login, register } = useAuth();
 
   // React Hook Forms
@@ -126,11 +126,10 @@ export default function LoginPage() {
               setErrorMsg(null);
               setSuccessMsg(null);
             }}
-            className={`flex-1 py-4 text-center text-sm font-semibold transition-all duration-200 border-b-2 ${
-              activeTab === 'login'
+            className={`flex-1 py-4 text-center text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'login'
                 ? 'border-sky-500 text-sky-400 bg-slate-800/30'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             เข้าสู่ระบบ
           </button>
@@ -140,11 +139,10 @@ export default function LoginPage() {
               setErrorMsg(null);
               setSuccessMsg(null);
             }}
-            className={`flex-1 py-4 text-center text-sm font-semibold transition-all duration-200 border-b-2 ${
-              activeTab === 'register'
+            className={`flex-1 py-4 text-center text-sm font-semibold transition-all duration-200 border-b-2 ${activeTab === 'register'
                 ? 'border-sky-500 text-sky-400 bg-slate-800/30'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
+              }`}
           >
             ลงทะเบียน
           </button>

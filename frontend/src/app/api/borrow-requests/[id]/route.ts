@@ -37,3 +37,59 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
+
+export async function PATCH(request: NextRequest, { params }: Params) {
+  try {
+    const user = await getAuthUser(request);
+    if (!user) return unauthorized();
+
+    if (user.role !== Role.ADMIN) {
+      return NextResponse.json({ message: 'ไม่มีสิทธิ์ดำเนินการ (เฉพาะผู้ดูแลระบบเท่านั้น)' }, { status: 403 });
+    }
+
+    const { id } = await params;
+    const body = await request.json().catch(() => ({}));
+    const returnDateVal = body.returnDate;
+
+    if (!returnDateVal) {
+      return NextResponse.json({ message: 'กรุณาระบุวันที่ส่งคืน' }, { status: 400 });
+    }
+
+    const borrowRequest = await prisma.borrowRequest.findUnique({
+      where: { id },
+      include: { assetReturn: true },
+    });
+
+    if (!borrowRequest) {
+      return NextResponse.json({ message: 'ไม่พบคำขอยืมสินทรัพย์' }, { status: 404 });
+    }
+
+    if (!borrowRequest.assetReturn) {
+      return NextResponse.json({ message: 'ไม่พบข้อมูลบันทึกสภาพการส่งคืน' }, { status: 400 });
+    }
+
+    const updatedReturn = await prisma.assetReturn.update({
+      where: { borrowRequestId: id },
+      data: {
+        returnDate: new Date(returnDateVal),
+      },
+    });
+
+    // Create Audit Log
+    await prisma.auditLog.create({
+      data: {
+        userId: user.sub,
+        action: 'UPDATE_RETURN_DATE',
+        entityType: 'AssetReturn',
+        entityId: borrowRequest.assetReturn.id,
+        oldData: borrowRequest.assetReturn as any,
+        newData: updatedReturn as any,
+      },
+    });
+
+    return NextResponse.json(updatedReturn);
+  } catch (error: any) {
+    console.error('Update return date error:', error);
+    return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาด' }, { status: 500 });
+  }
+}

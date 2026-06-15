@@ -14,6 +14,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (roleError) return roleError;
 
     const { id } = await params;
+    const body = await request.json().catch(() => ({}));
+    const returnDateVal = body.returnDate;
+
     const borrowRequest = await prisma.borrowRequest.findUnique({
       where: { id },
       include: { asset: true, assetReturn: true },
@@ -65,6 +68,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         where: { borrowRequestId: id },
         data: {
           recordedById: user.sub,
+          ...(returnDateVal ? { returnDate: new Date(returnDateVal) } : {}),
         },
       });
 

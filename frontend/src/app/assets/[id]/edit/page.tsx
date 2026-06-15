@@ -34,7 +34,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
   const {
     register,
     handleSubmit,
-    setValue,
+    reset,
     formState: { errors },
   } = useForm<AssetForm>({
     resolver: zodResolver(assetSchema),
@@ -46,13 +46,15 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
         const res = await api.get(`/assets/${id}`);
         const data = res.data;
         
-        setValue('assetCode', data.assetCode);
-        setValue('name', data.name);
-        setValue('category', data.category);
-        setValue('serialNumber', data.serialNumber || '');
-        setValue('description', data.description || '');
-        setValue('qrCode', data.qrCode);
-        setValue('status', data.status);
+        reset({
+          assetCode: data.assetCode,
+          name: data.name,
+          category: data.category,
+          serialNumber: data.serialNumber || '',
+          description: data.description || '',
+          qrCode: data.qrCode,
+          status: data.status,
+        });
         
         setImageUrl(data.imageUrl || null);
         setCloudinaryPublicId(data.cloudinaryPublicId || null);
@@ -63,7 +65,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
       }
     };
     fetchAssetDetails();
-  }, [id, setValue]);
+  }, [id, reset]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
