@@ -190,7 +190,7 @@ export default function DashboardPage() {
               className="bg-white text-sky-600 hover:bg-sky-50 px-5 py-3 rounded-2xl font-bold text-xs shadow-lg transition-all duration-200 flex items-center gap-2"
             >
               <PlusCircle size={16} />
-              <span>ยื่นขอยืมของ</span>
+              <span>ยื่นคำขอยืม</span>
             </Link>
           )}
         </div>

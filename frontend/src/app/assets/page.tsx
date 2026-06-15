@@ -226,7 +226,7 @@ export default function AssetsPage() {
                       className="flex-1 flex items-center justify-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors cursor-pointer shadow-sm shadow-sky-500/10"
                     >
                       <Plus size={14} />
-                      <span>ยืมของ</span>
+                      <span>ยื่นขอยืม</span>
                     </Link>
                   )}
 
