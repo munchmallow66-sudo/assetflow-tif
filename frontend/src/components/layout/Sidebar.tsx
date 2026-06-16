@@ -147,13 +147,16 @@ export default function Sidebar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`relative flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
                     isActive
-                      ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                      ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20 scale-[1.02]'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                   }`}
                 >
-                  <Icon size={18} />
+                  {isActive && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full animate-scale-in" />
+                  )}
+                  <Icon size={18} className={isActive ? 'animate-scale-in' : ''} />
                   <span>{link.label}</span>
                 </Link>
               );

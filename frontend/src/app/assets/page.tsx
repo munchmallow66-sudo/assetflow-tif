@@ -5,6 +5,8 @@ import { useAuth } from '@/components/providers/AuthProvider';
 import api from '@/lib/api';
 import { Search, Plus, Eye, Edit2, Trash2, Box, QrCode } from 'lucide-react';
 import Link from 'next/link';
+import PageTransition from '@/components/common/PageTransition';
+import { useToast } from '@/components/providers/ToastProvider';
 
 interface Asset {
   id: string;
@@ -25,6 +27,7 @@ interface Asset {
 
 export default function AssetsPage() {
   const { user } = useAuth();
+  const toast = useToast();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -50,10 +53,10 @@ export default function AssetsPage() {
     if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบ/จำหน่ายสินทรัพย์: ${name}?`)) return;
     try {
       await api.delete(`/assets/${id}`);
-      alert('ทำรายการเรียบร้อยแล้ว');
+      toast.success('ทำรายการเรียบร้อยแล้ว', `ลบสินทรัพย์ ${name} เรียบร้อยแล้ว`);
       fetchAssets();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'การลบล้มเหลว');
+      toast.error('การลบล้มเหลว', err.response?.data?.message || 'ไม่สามารถลบสินทรัพย์นี้ได้');
     }
   };
 
@@ -89,7 +92,7 @@ export default function AssetsPage() {
   const categories = ['ALL', ...Array.from(new Set(assets.map((a) => a.category)))];
 
   return (
-    <div className="space-y-6">
+    <PageTransition className="space-y-6">
       {/* Title block */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
@@ -168,10 +171,10 @@ export default function AssetsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredAssets.map((asset) => (
+          {filteredAssets.map((asset, index) => (
             <div
               key={asset.id}
-              className="bg-white border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between overflow-hidden card-hover"
+              className={`bg-white border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between overflow-hidden card-hover animate-fade-in-up stagger-${Math.min(index + 1, 12)}`}
             >
               {/* Image Banner */}
               <div className="h-44 bg-slate-100 relative overflow-hidden flex items-center justify-center border-b border-slate-100">
@@ -252,6 +255,6 @@ export default function AssetsPage() {
           ))}
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 }

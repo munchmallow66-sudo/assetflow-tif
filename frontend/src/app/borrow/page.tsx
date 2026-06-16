@@ -21,6 +21,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { TableSkeleton } from '@/components/common/Skeleton';
+import PageTransition from '@/components/common/PageTransition';
+import AnimatedCounter from '@/components/common/AnimatedCounter';
+import { useToast } from '@/components/providers/ToastProvider';
 
 interface BorrowRequest {
   id: string;
@@ -52,6 +55,7 @@ interface BorrowRequest {
 
 export default function BorrowPage() {
   const { user } = useAuth();
+  const toast = useToast();
   const [requests, setRequests] = useState<BorrowRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'history'>('pending');
@@ -97,10 +101,10 @@ export default function BorrowPage() {
     if (!confirm(`ยืนยันการอนุมัติการยืมรายการรหัส: ${requestNo}?`)) return;
     try {
       await api.patch(`/borrow-requests/${id}/approve`);
-      alert('อนุมัติรายการยืมเรียบร้อยแล้ว');
+      toast.success('อนุมัติเรียบร้อยแล้ว', `อนุมัติรายการยืมรหัส: ${requestNo}`);
       fetchRequests();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'การอนุมัติล้มเหลว');
+      toast.error('การอนุมัติล้มเหลว', err.response?.data?.message || 'ไม่สามารถอนุมัติรายการนี้ได้');
     }
   };
 
@@ -108,16 +112,16 @@ export default function BorrowPage() {
     const reason = prompt('กรุณาระบุเหตุผลในการปฏิเสธคำขอนี้:');
     if (reason === null) return;
     if (!reason.trim()) {
-      alert('จำเป็นต้องระบุเหตุผลในการปฏิเสธ');
+      toast.warning('ต้องระบุเหตุผล', 'จำเป็นต้องระบุเหตุผลในการปฏิเสธ');
       return;
     }
 
     try {
       await api.patch(`/borrow-requests/${id}/reject`, { rejectedReason: reason });
-      alert('ปฏิเสธรายการยืมเรียบร้อยแล้ว');
+      toast.success('ปฏิเสธเรียบร้อยแล้ว', `ปฏิเสธรายการยืมรหัส: ${requestNo}`);
       fetchRequests();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'การดำเนินการล้มเหลว');
+      toast.error('การดำเนินการล้มเหลว', err.response?.data?.message || 'ไม่สามารถปฏิเสธคำขอนี้ได้');
     }
   };
 
@@ -125,10 +129,10 @@ export default function BorrowPage() {
     if (!confirm(`คุณต้องการยกเลิกคำขอยืมรายการรหัส: ${requestNo}?`)) return;
     try {
       await api.patch(`/borrow-requests/${id}/cancel`);
-      alert('ยกเลิกรายการยืมเรียบร้อยแล้ว');
+      toast.success('ยกเลิกเรียบร้อยแล้ว', `ยกเลิกคำขอยืมรหัส: ${requestNo}`);
       fetchRequests();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'การยกเลิกล้มเหลว');
+      toast.error('การยกเลิกล้มเหลว', err.response?.data?.message || 'ไม่สามารถยกเลิกคำขอนี้ได้');
     }
   };
 
@@ -141,11 +145,11 @@ export default function BorrowPage() {
       await api.patch(`/borrow-requests/${id}/approve-return`, {
         returnDate: new Date(customReturnDate).toISOString(),
       });
-      alert('อนุมัติการส่งคืนเรียบร้อยแล้ว');
+      toast.success('อนุมัติการส่งคืนเรียบร้อยแล้ว', `อนุมัติรับคืนรหัส: ${reqNo}`);
       setSelectedReturn(null);
       fetchRequests();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'การอนุมัติล้มเหลว');
+      toast.error('การอนุมัติล้มเหลว', err.response?.data?.message || 'ไม่สามารถอนุมัติการส่งคืนนี้ได้');
     }
   };
 
@@ -155,7 +159,7 @@ export default function BorrowPage() {
       const res = await api.patch(`/borrow-requests/${selectedReturn.id}`, {
         returnDate: new Date(customReturnDate).toISOString(),
       });
-      alert('แก้ไขวันเวลาที่ส่งคืนเรียบร้อยแล้ว');
+      toast.success('แก้ไขวันเวลาเรียบร้อย', 'บันทึกวันเวลาที่ส่งคืนใหม่แล้ว');
       setIsEditingDate(false);
       
       // Update local state to reflect edit inside modal
@@ -168,7 +172,7 @@ export default function BorrowPage() {
       });
       fetchRequests();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'การแก้ไขล้มเหลว');
+      toast.error('การแก้ไขล้มเหลว', err.response?.data?.message || 'ไม่สามารถแก้ไขวันที่ส่งคืนได้');
     }
   };
 
@@ -176,11 +180,11 @@ export default function BorrowPage() {
     if (!confirm(`ยืนยันการปฏิเสธการรับคืนรายการรหัส: ${requestNo}?`)) return;
     try {
       await api.patch(`/borrow-requests/${id}/reject-return`);
-      alert('ปฏิเสธการส่งคืนเรียบร้อยแล้ว');
+      toast.success('ปฏิเสธการส่งคืนเรียบร้อย', `ปฏิเสธการรับคืนรหัส: ${requestNo}`);
       setSelectedReturn(null);
       fetchRequests();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'การดำเนินการล้มเหลว');
+      toast.error('การดำเนินการล้มเหลว', err.response?.data?.message || 'ไม่สามารถปฏิเสธการรับคืนได้');
     }
   };
 
@@ -310,7 +314,7 @@ export default function BorrowPage() {
   ];
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12">
+    <PageTransition className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* Premium Header Banner */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 md:p-8 text-white shadow-lg border border-slate-800 shadow-indigo-950/20 animate-fade-in">
         <div className="absolute inset-0 opacity-5 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
@@ -336,12 +340,12 @@ export default function BorrowPage() {
       {/* Stats Cards Section */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Card 1: Total */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group animate-fade-in-up stagger-1">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-slate-100/40 dark:bg-slate-800/10 group-hover:scale-125 transition-transform duration-500 blur-xl"></div>
           <div className="relative space-y-1">
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">คำขอทั้งหมด</p>
             <p className="text-2xl font-extrabold text-slate-800 dark:text-white mt-1">
-              {statsCounts.total} <span className="text-xs font-normal text-slate-400">รายการ</span>
+              <AnimatedCounter value={statsCounts.total} /> <span className="text-xs font-normal text-slate-400">รายการ</span>
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-955/50 text-slate-500 flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-800 relative z-10 shadow-inner">
@@ -350,12 +354,12 @@ export default function BorrowPage() {
         </div>
 
         {/* Card 2: Pending */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group animate-fade-in-up stagger-2">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-amber-500/5 group-hover:scale-125 transition-transform duration-500 blur-xl"></div>
           <div className="relative space-y-1">
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">รอพิจารณา</p>
             <p className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-1">
-              {statsCounts.pending} <span className="text-xs font-normal text-slate-400">รายการ</span>
+              <AnimatedCounter value={statsCounts.pending} /> <span className="text-xs font-normal text-slate-400">รายการ</span>
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-955/20 text-amber-500 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900/30 relative z-10 shadow-inner">
@@ -364,12 +368,12 @@ export default function BorrowPage() {
         </div>
 
         {/* Card 3: Borrowed */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group animate-fade-in-up stagger-3">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-sky-500/5 group-hover:scale-125 transition-transform duration-500 blur-xl"></div>
           <div className="relative space-y-1">
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">กำลังยืม</p>
             <p className="text-2xl font-extrabold text-sky-600 dark:text-sky-400 mt-1">
-              {statsCounts.borrowed} <span className="text-xs font-normal text-slate-400">รายการ</span>
+              <AnimatedCounter value={statsCounts.borrowed} /> <span className="text-xs font-normal text-slate-400">รายการ</span>
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-955/20 text-sky-500 flex items-center justify-center shrink-0 border border-sky-100 dark:border-sky-900/30 relative z-10 shadow-inner">
@@ -378,12 +382,12 @@ export default function BorrowPage() {
         </div>
 
         {/* Card 4: Overdue */}
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group">
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group animate-fade-in-up stagger-4">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-red-500/5 group-hover:scale-125 transition-transform duration-500 blur-xl"></div>
           <div className="relative space-y-1">
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">เลยกำหนดคืน</p>
             <p className="text-2xl font-extrabold text-red-500 dark:text-red-400 mt-1">
-              {statsCounts.overdue} <span className="text-xs font-normal text-slate-400">รายการ</span>
+              <AnimatedCounter value={statsCounts.overdue} /> <span className="text-xs font-normal text-slate-400">รายการ</span>
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-955/20 text-red-500 flex items-center justify-center shrink-0 border border-red-100 dark:border-red-900/30 relative z-10 shadow-inner">
@@ -498,7 +502,7 @@ export default function BorrowPage() {
                 {filteredList.map((item) => {
                   const initials = item.borrower.firstName.charAt(0).toUpperCase();
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/20 dark:hover:bg-slate-955/10 transition-all duration-150">
+                    <tr key={item.id} className="table-row-hover transition-all duration-150">
                       {/* Request No */}
                       <td className="px-6 py-4.5">
                         <span className="font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/50 px-2.5 py-1.5 rounded-xl text-[10px] shadow-sm">
@@ -837,6 +841,6 @@ export default function BorrowPage() {
           </div>
         </div>
       )}
-    </div>
+    </PageTransition>
   );
 }

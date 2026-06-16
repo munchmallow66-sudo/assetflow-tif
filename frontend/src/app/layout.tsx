@@ -2,12 +2,83 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 import AppLayout from "@/components/layout/AppLayout";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://assetflow-tif.vercel.app"),
-  title: "ระบบจัดการยืม-คืนสินทรัพย์ | Thai Inter Flying",
-  description: "ระบบจัดการการยืมและคืนสินทรัพย์ภายใน บริษัท Thai Inter Flying จำกัด",
+
+  // ===== Core Metadata =====
+  title: {
+    default: "ระบบจัดการยืม-คืนสินทรัพย์ | Thai Inter Flying",
+    template: "%s | TIF AssetFlow",
+  },
+  description:
+    "ระบบบริหารจัดการยืมและคืนครุภัณฑ์ อุปกรณ์การบิน สำหรับบริษัท Thai Inter Flying จำกัด (สถาบันการบิน) — ยืมคืนง่าย ตรวจสอบสถานะได้ทันที สะดวก รวดเร็ว ปลอดภัย",
+  keywords: [
+    "ระบบจัดการสินทรัพย์",
+    "ยืม-คืนสินทรัพย์",
+    "ครุภัณฑ์การบิน",
+    "Thai Inter Flying",
+    "สถาบันการบิน",
+    "asset management",
+    "borrow return system",
+    "TIF AssetFlow",
+    "aviation equipment management",
+    "ระบบยืมของ",
+    "ระบบจัดการครุภัณฑ์",
+    "อุปกรณ์การบิน",
+  ],
+  authors: [{ name: "Thai Inter Flying Co., Ltd." }],
+  creator: "Thai Inter Flying",
+  publisher: "Thai Inter Flying Co., Ltd.",
+  category: "Business",
+  applicationName: "TIF AssetFlow",
+
+  // ===== Canonical & Alternates =====
+  alternates: {
+    canonical: "/",
+  },
+
+  // ===== Format Detection =====
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+
+  // ===== Open Graph (Facebook, LinkedIn, etc.) =====
+  openGraph: {
+    type: "website",
+    locale: "th_TH",
+    url: "https://assetflow-tif.vercel.app",
+    siteName: "TIF AssetFlow",
+    title: "ระบบจัดการยืม-คืนสินทรัพย์ | Thai Inter Flying",
+    description:
+      "ระบบบริหารจัดการยืมและคืนครุภัณฑ์ อุปกรณ์การบินสำหรับ Thai Inter Flying — ยืมคืนง่าย ตรวจสอบสถานะได้ทันที",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "TIF AssetFlow — ระบบจัดการยืม-คืนสินทรัพย์ Thai Inter Flying",
+      },
+    ],
+  },
+
+  // ===== Twitter Card =====
+  twitter: {
+    card: "summary_large_image",
+    title: "ระบบจัดการยืม-คืนสินทรัพย์ | Thai Inter Flying",
+    description:
+      "ระบบบริหารจัดการยืมและคืนครุภัณฑ์ อุปกรณ์การบินสำหรับ Thai Inter Flying — ยืมคืนง่าย ตรวจสอบสถานะได้ทันที",
+    images: ["/opengraph-image"],
+  },
+
+  // ===== Verification (placeholder — fill in real codes after registering) =====
+  // verification: {
+  //   google: "YOUR_GOOGLE_VERIFICATION_CODE",
+  // },
 };
 
 export default function RootLayout({
@@ -20,7 +91,9 @@ export default function RootLayout({
       <body className="min-h-full antialiased text-slate-900 bg-slate-50 dark:bg-slate-955 dark:text-slate-100 transition-colors duration-200">
         <ThemeProvider>
           <AuthProvider>
-            <AppLayout>{children}</AppLayout>
+            <ToastProvider>
+              <AppLayout>{children}</AppLayout>
+            </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

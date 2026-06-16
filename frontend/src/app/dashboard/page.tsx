@@ -22,6 +22,8 @@ import {
 import Link from 'next/link';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
 import { Skeleton, StatsCardSkeleton, ChartSkeleton } from '@/components/common/Skeleton';
+import PageTransition from '@/components/common/PageTransition';
+import AnimatedCounter from '@/components/common/AnimatedCounter';
 
 interface DashboardStats {
   totalAssets: number;
@@ -173,7 +175,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <PageTransition className="space-y-8">
       {/* Welcome Header */}
       <div className="bg-gradient-to-r from-sky-500 to-indigo-600 p-6 md:p-8 rounded-3xl text-white shadow-xl shadow-sky-500/10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
         <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-[url('/aviation_pattern.svg')] bg-cover opacity-10 pointer-events-none"></div>
@@ -231,16 +233,16 @@ export default function DashboardPage() {
       )}
 
       {/* Stats Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="dashboard-stats">
         {/* Card 1: Total */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-5 card-hover">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-5 card-hover animate-fade-in-up stagger-1">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-500 flex items-center justify-center shrink-0">
               <Box size={24} />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">สินทรัพย์ทั้งหมด</p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">{stats.totalAssets} ชิ้น</p>
+              <p className="text-2xl font-bold text-slate-800 mt-1"><AnimatedCounter value={stats.totalAssets} suffix=" ชิ้น" /></p>
             </div>
           </div>
           <svg className="w-16 h-8 text-sky-500 opacity-60 ml-auto shrink-0" viewBox="0 0 100 30" fill="none">
@@ -249,14 +251,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 2: Available */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-5 card-hover">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-5 card-hover animate-fade-in-up stagger-2">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
               <CheckCircle size={24} />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">พร้อมใช้งาน</p>
-              <p className="text-2xl font-bold text-emerald-600 mt-1">{stats.availableAssets} ชิ้น</p>
+              <p className="text-2xl font-bold text-emerald-600 mt-1"><AnimatedCounter value={stats.availableAssets} suffix=" ชิ้น" /></p>
             </div>
           </div>
           <svg className="w-16 h-8 text-emerald-500 opacity-60 ml-auto shrink-0" viewBox="0 0 100 30" fill="none">
@@ -265,14 +267,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 3: Overdue */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-5 card-hover">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-5 card-hover animate-fade-in-up stagger-3">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
               <Clock size={24} />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider font-sans">ค้างส่งคืน / Overdue</p>
-              <p className="text-2xl font-bold text-amber-600 mt-1">{stats.overdueRequests} รายการ</p>
+              <p className="text-2xl font-bold text-amber-600 mt-1"><AnimatedCounter value={stats.overdueRequests} suffix=" รายการ" /></p>
             </div>
           </div>
           <svg className="w-16 h-8 text-amber-500 opacity-60 ml-auto shrink-0" viewBox="0 0 100 30" fill="none">
@@ -281,14 +283,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 4: Damaged */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-5 card-hover">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between gap-5 card-hover animate-fade-in-up stagger-4">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center shrink-0">
               <AlertTriangle size={24} />
             </div>
             <div>
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">ชำรุดเสียหาย</p>
-              <p className="text-2xl font-bold text-red-600 mt-1">{stats.maintenanceAssets} ชิ้น</p>
+              <p className="text-2xl font-bold text-red-600 mt-1"><AnimatedCounter value={stats.maintenanceAssets} suffix=" ชิ้น" /></p>
             </div>
           </div>
           <svg className="w-16 h-8 text-red-500 opacity-60 ml-auto shrink-0" viewBox="0 0 100 30" fill="none">
@@ -598,6 +600,6 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageTransition>
   );
 }
