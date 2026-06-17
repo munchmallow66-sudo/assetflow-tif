@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { Mail, Lock, User, Briefcase, Phone, UserCheck, ShieldAlert, HelpCircle, BookOpen } from 'lucide-react';
+import { Mail, Lock, User, Briefcase, Phone, UserCheck, ShieldAlert } from 'lucide-react';
 
 // Zod schemas for validation
 const loginSchema = z.object({
@@ -369,33 +369,6 @@ export default function LoginPage() {
               </button>
             </form>
           )}
-        </div>
-
-        {/* Support & Resources Footer */}
-        <div className="px-8 py-5 bg-slate-950/50 border-t border-slate-800/60 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs relative z-20">
-          <div className="flex items-center gap-2 text-slate-400">
-            <HelpCircle size={15} className="text-sky-400 shrink-0" />
-            <span>ต้องการความช่วยเหลือ? ติดต่อฝ่าย IT</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <a 
-              href="/manuals/user-guide.pdf" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1.5 transition-colors duration-200"
-            >
-              <BookOpen size={14} />
-              คู่มือการใช้งาน
-            </a>
-            <span className="text-slate-800 hidden sm:inline">|</span>
-            <a 
-              href="mailto:it@thaiinterflying.com" 
-              className="text-slate-400 hover:text-slate-200 font-medium flex items-center gap-1.5 transition-colors duration-200"
-            >
-              <Mail size={14} />
-              ติดต่อแอดมิน
-            </a>
-          </div>
         </div>
       </div>
     </div>
