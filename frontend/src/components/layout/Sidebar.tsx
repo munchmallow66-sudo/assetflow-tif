@@ -16,7 +16,6 @@ import {
   UserCheck,
   Settings,
   LogOut,
-  FolderSync,
   Menu,
   X,
   Sun,

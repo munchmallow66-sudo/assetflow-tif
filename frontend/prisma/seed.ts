@@ -480,7 +480,7 @@ async function main() {
       department: 'เลขานุการ (Secretary) (BKK)',
       email: 'anchittha.kh@gmail.com',
       phone: '091-034-3976',
-      role: Role.STAFF,
+      role: Role.ADMIN,
     },
     {
       employeeCode: '690011',
