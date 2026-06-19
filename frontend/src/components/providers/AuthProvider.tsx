@@ -82,7 +82,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (pathname.startsWith('/users') && user.role !== 'ADMIN') {
         router.push('/dashboard');
       }
-      if (pathname.startsWith('/employees') && user.role !== 'ADMIN') {
+      if (
+        pathname.startsWith('/employees') &&
+        !['ADMIN', 'APPROVER', 'STAFF', 'VIEWER'].includes(user.role)
+      ) {
         router.push('/dashboard');
       }
       if (

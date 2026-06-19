@@ -71,9 +71,9 @@ export default function Sidebar() {
     },
     {
       href: '/employees',
-      label: 'จัดการพนักงาน',
+      label: role === 'ADMIN' ? 'จัดการพนักงาน' : 'รายชื่อพนักงาน',
       icon: UserCheck,
-      roles: ['ADMIN'],
+      roles: ['ADMIN', 'APPROVER', 'STAFF', 'VIEWER'],
     },
     {
       href: '/settings',

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { Trash2, Phone, Briefcase, Mail } from 'lucide-react';
 
 interface EmployeeData {
@@ -15,6 +16,8 @@ interface EmployeeData {
 }
 
 export default function EmployeesPage() {
+  const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN';
   const [employees, setEmployees] = useState<EmployeeData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,8 +51,12 @@ export default function EmployeesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">จัดการรายชื่อพนักงาน</h1>
-        <p className="text-slate-500 text-xs mt-1">บันทึกประวัติ แก้ไขข้อมูลแผนก และรายชื่อพนักงานของ Thai Inter Flying</p>
+        <h1 className="text-2xl font-bold text-slate-800">{isAdmin ? 'จัดการรายชื่อพนักงาน' : 'รายชื่อพนักงาน'}</h1>
+        <p className="text-slate-500 text-xs mt-1">
+          {isAdmin 
+            ? 'บันทึกประวัติ แก้ไขข้อมูลแผนก และรายชื่อพนักงานของ Thai Inter Flying' 
+            : 'รายชื่อพนักงานและข้อมูลติดต่อของหน่วยงานต่างๆ ใน Thai Inter Flying'}
+        </p>
       </div>
 
       {loading ? (
@@ -67,7 +74,7 @@ export default function EmployeesPage() {
                   <th className="px-6 py-4">แผนก / ฝ่าย</th>
                   <th className="px-6 py-4">อีเมลติดต่อ</th>
                   <th className="px-6 py-4">เบอร์โทรศัพท์</th>
-                  <th className="px-6 py-4 text-center">ดำเนินการ</th>
+                  {isAdmin && <th className="px-6 py-4 text-center">ดำเนินการ</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -99,15 +106,17 @@ export default function EmployeesPage() {
                         <span className="text-slate-300">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => handleDelete(emp.id, `${emp.firstName} ${emp.lastName}`)}
-                        className="p-1.5 border border-slate-200 hover:border-red-500 hover:text-red-600 text-slate-400 rounded-lg transition-colors cursor-pointer"
-                        title="ลบพนักงาน"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
+                    {isAdmin && (
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => handleDelete(emp.id, `${emp.firstName} ${emp.lastName}`)}
+                          className="p-1.5 border border-slate-200 hover:border-red-500 hover:text-red-600 text-slate-400 rounded-lg transition-colors cursor-pointer"
+                          title="ลบพนักงาน"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

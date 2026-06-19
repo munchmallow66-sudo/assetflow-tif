@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   try {
     const user = await getAuthUser(request);
     if (!user) return unauthorized();
-    const roleError = requireRoles(user, Role.ADMIN, Role.APPROVER);
+    const roleError = requireRoles(user, Role.ADMIN, Role.APPROVER, Role.STAFF, Role.VIEWER);
     if (roleError) return roleError;
 
     const employees = await prisma.employee.findMany({

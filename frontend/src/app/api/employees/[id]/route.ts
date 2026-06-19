@@ -12,7 +12,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   try {
     const user = await getAuthUser(request);
     if (!user) return unauthorized();
-    const roleError = requireRoles(user, Role.ADMIN, Role.APPROVER);
+    const roleError = requireRoles(user, Role.ADMIN, Role.APPROVER, Role.STAFF, Role.VIEWER);
     if (roleError) return roleError;
 
     const { id } = await params;
