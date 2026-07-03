@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { Mail, Lock, User, Briefcase, Phone, UserCheck, ShieldAlert } from 'lucide-react';
+import { Mail, Lock, User, Briefcase, Phone, UserCheck, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 
 // Zod schemas for validation
 const loginSchema = z.object({
@@ -33,6 +33,8 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
 
   const { login, register } = useAuth();
 
@@ -178,7 +180,7 @@ export default function LoginPage() {
                   <input
                     type="email"
                     {...registerLoginField('email')}
-                    placeholder="name@thaiinterflying.com"
+                    placeholder="name@tif.ac.th"
                     className="w-full bg-slate-900 border border-slate-700/80 rounded-lg pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all duration-250"
                   />
                 </div>
@@ -196,11 +198,18 @@ export default function LoginPage() {
                     <Lock size={18} />
                   </div>
                   <input
-                    type="password"
+                    type={showLoginPassword ? "text" : "password"}
                     {...registerLoginField('password')}
                     placeholder="••••••••"
-                    className="w-full bg-slate-900 border border-slate-700/80 rounded-lg pl-10 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all duration-250"
+                    className="w-full bg-slate-900 border border-slate-700/80 rounded-lg pl-10 pr-10 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-all duration-250"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 focus:outline-none cursor-pointer"
+                  >
+                    {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
                 {loginErrors.password && (
                   <p className="text-red-400 text-xs mt-1.5 font-medium">{loginErrors.password.message}</p>
@@ -252,7 +261,7 @@ export default function LoginPage() {
                     <input
                       type="email"
                       {...registerRegField('email')}
-                      placeholder="employee@thaiinterflying.com"
+                      placeholder="employee@tif.ac.th"
                       className="w-full bg-slate-900 border border-slate-700/80 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
                     />
                   </div>
@@ -269,11 +278,18 @@ export default function LoginPage() {
                     <Lock size={16} />
                   </div>
                   <input
-                    type="password"
+                    type={showRegPassword ? "text" : "password"}
                     {...registerRegField('password')}
                     placeholder="รหัสผ่านอย่างน้อย 6 ตัวอักษร"
-                    className="w-full bg-slate-900 border border-slate-700/80 rounded-lg pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                    className="w-full bg-slate-900 border border-slate-700/80 rounded-lg pl-9 pr-10 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 focus:outline-none cursor-pointer"
+                  >
+                    {showRegPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
                 {regErrors.password && (
                   <p className="text-red-400 text-[10px] mt-1">{regErrors.password.message}</p>

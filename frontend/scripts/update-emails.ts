@@ -1,0 +1,537 @@
+import { PrismaClient, Role } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+const tifEmployeesData = [
+  {
+    employeeCode: '680000',
+    firstName: 'นายพันธ์พิสุทธิ์',
+    lastName: 'นุราช (แม็ค)',
+    department: 'Owner (BKK)',
+    email: 'punpisut.nur@tif.ac.th',
+    phone: '099 101 9999',
+    role: Role.ADMIN,
+  },
+  {
+    employeeCode: '600001',
+    firstName: 'ร.อ.สุนทร',
+    lastName: 'วัชพืช (ครูสุน)',
+    department: 'Flight Instructor (PHS 1Y)',
+    email: 'soontorn.wut@tif.ac.th',
+    phone: '089 245 0900',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '600002',
+    firstName: 'พ.จ.อ.วินัย',
+    lastName: 'เกษม (วินัย)',
+    department: 'Director of Maintenance (PHS 1Y)',
+    email: 'winai.kas@tif.ac.th',
+    phone: '083 697 4668',
+    role: Role.APPROVER,
+  },
+  {
+    employeeCode: '600003',
+    firstName: 'นางสาวสังเวียน',
+    lastName: 'บุญเสริม (ต้อย)',
+    department: 'แม่บ้าน (BKK)',
+    email: 'sungwian.boo@tif.ac.th',
+    phone: '084 521 1269',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '610002',
+    firstName: 'นายนิรุทธ์',
+    lastName: 'เพ็ชรมั่ง (รุทธ์)',
+    department: 'Driver (PHS)',
+    email: 'nirut.peh@tif.ac.th',
+    phone: '080 986 0294',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '620001',
+    firstName: 'นายเอกวรรธน์',
+    lastName: 'ขาวสอาด (โอจีฟ)',
+    department: 'Purchasing Manager (Part Time)',
+    email: 'ekkawat.kha@tif.ac.th',
+    phone: '090 984 4999',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '620002',
+    firstName: 'นายพัฒน์',
+    lastName: 'โพธิ์ปฐมพร (พัฒน์)',
+    department: 'Chief flight instructor (PHS 1Y)',
+    email: 'phat.pho@tif.ac.th',
+    phone: '081 661 1462',
+    role: Role.APPROVER,
+  },
+  {
+    employeeCode: '650002',
+    firstName: 'น.ส.สุวรรณ',
+    lastName: 'พันธ์มณี (สาว)',
+    department: 'แม่บ้าน (PHS)',
+    email: 'suwan.pun@tif.ac.th',
+    phone: '083-127-2187',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '650006',
+    firstName: 'น.ส.กชกร',
+    lastName: 'มณีนาค (เป้)',
+    department: 'Store Keeper and Aircraft Mechanic (PHS)',
+    email: 'kodchakorn.man@tif.ac.th',
+    phone: '064 064 0948',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '660002',
+    firstName: 'นายหนึ่งณัฐ',
+    lastName: 'ยิ้มศรี (ณัฐ)',
+    department: 'Aircraft Mechanic (PHS)',
+    email: 'nuengnat.yim@tif.ac.th',
+    phone: '088 906 6592',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '670001',
+    firstName: 'นายชวัลวิทย์',
+    lastName: 'วงศ์ชัย (กัปตัน)',
+    department: 'เจ้าหน้าที่สนามบินคลอง 11 (PHS)',
+    email: 'chawanwit.won@tif.ac.th',
+    phone: '089 133 8561',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '670002',
+    firstName: 'นายชยพล',
+    lastName: 'หารบุรุษ (เก่ง)',
+    department: 'Aircraft Mechanic (PHS)',
+    email: 'chayapon.han@tif.ac.th',
+    phone: '095 072 2327',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '670005',
+    firstName: 'นายสิรวิชช์',
+    lastName: 'อรชร (ปอ)',
+    department: 'Aircraft Mechanic (PHS)',
+    email: 'sirawit.aor@tif.ac.th',
+    phone: '091 820 9718',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '670008',
+    firstName: 'นายไพศาล',
+    lastName: 'อุบลวรรณ์ (อ๊อฟ)',
+    department: 'Aircraft Mechanic (PHS)',
+    email: 'paisan.ubo@tif.ac.th',
+    phone: '094-830-5758',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '670010',
+    firstName: 'นายจักรี',
+    lastName: 'สุบงกฏ (ตุ้ม)',
+    department: 'Acting Accountable Executive (BKK)',
+    email: 'chakri.sub@tif.ac.th',
+    phone: '084 7511 311',
+    role: Role.APPROVER,
+  },
+  {
+    employeeCode: '680001',
+    firstName: 'น.ส.สิภาพันธุ์',
+    lastName: 'พันธุ์เพ็ง (เปียโน)',
+    department: 'Training Officer (Part Time)',
+    email: 'sipapun.pun@tif.ac.th',
+    phone: '080-550-0083',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '680002',
+    firstName: 'นางสาวศุภนุช',
+    lastName: 'ปัญโญกิจ (หงษ์)',
+    department: 'Aircraft Mechanic (PHS)',
+    email: 'supanoot.pun@tif.ac.th',
+    phone: '097 295 6738',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '680007',
+    firstName: 'นายภาณุ',
+    lastName: 'นิ่มสกุล (หนึ่ง)',
+    department: 'Chief Executive Officer: CEO/ประธานเจ้าหน้าที่บริหาร (BKK)',
+    email: 'panu.nim@tif.ac.th',
+    phone: '084 597 9914',
+    role: Role.ADMIN,
+  },
+  {
+    employeeCode: '680008',
+    firstName: 'นายจักรินทร์',
+    lastName: 'กัญญาลักษณ์ (หน่อย)',
+    department: 'Chief Operating Officer: COO/ประธานเจ้าหน้าที่ฝ่ายปฏิบัติการ (BKK)',
+    email: 'jarkarin.kun@tif.ac.th',
+    phone: '097 247 4567',
+    role: Role.ADMIN,
+  },
+  {
+    employeeCode: '680009',
+    firstName: 'นางสาวพรปรียา',
+    lastName: 'ป้อมสุเมรุ (แอน)',
+    department: 'Chief Financial and Accounting Officer : CQO /ประธานเจ้าหน้าที่ฝ่ายการเงินและบัญชี (BKK)',
+    email: 'pornpreya.pom@tif.ac.th',
+    phone: '084 144 4740',
+    role: Role.APPROVER,
+  },
+  {
+    employeeCode: '680011',
+    firstName: 'นายณัฐพล',
+    lastName: 'สืบสุข (เต๊าะ)',
+    department: 'Director of Operations/ผู้อำนวยการฝ่ายปฏิบัติการ (PHS)',
+    email: 'nattapon.sue@tif.ac.th',
+    phone: '06-2035-4687',
+    role: Role.APPROVER,
+  },
+  {
+    employeeCode: '680012',
+    firstName: 'นายคีทัน',
+    lastName: 'วีเค (Keerthan)',
+    department: 'Chief Training Officer (PHS)',
+    email: 'keerthan.kar@tif.ac.th',
+    phone: '065-582-5250',
+    role: Role.APPROVER,
+  },
+  {
+    employeeCode: '680013',
+    firstName: 'นายธนวัฒน์',
+    lastName: 'รอดสิน (คิว)',
+    department: 'Aircraft Mechanic/ช่างซ่อมบำรุงอากาศยาน (PHS)',
+    email: 'thanawat.rod@tif.ac.th',
+    phone: '096 451 6192',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '680014',
+    firstName: 'นายมะกอยี',
+    lastName: 'สะอะ (ยี)',
+    department: 'Aircraft Mechanic/ช่างซ่อมบำรุงอากาศยาน (PHS)',
+    email: 'magoryee.saa@tif.ac.th',
+    phone: '062 249 0348',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '680015',
+    firstName: 'นายณัฐดนัย',
+    lastName: 'มังสาทอง (เควิ่น)',
+    department: 'Director of Standards/ผู้อำนวยการฝ่ายมาตรฐาน (BKK)',
+    email: 'natdanai.man@tif.ac.th',
+    phone: '084-846-5749',
+    role: Role.APPROVER,
+  },
+  {
+    employeeCode: '680017',
+    firstName: 'น.ส.ภควรรณ',
+    lastName: 'ชูรัตน์ (ตูน)',
+    department: 'Senior Finance and Accounting Officer/เจ้าหน้าที่การเงินและบัญชีอาวุโส (BKK)',
+    email: 'phakkawan.chu@tif.ac.th',
+    phone: '065-742-2624',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '680019',
+    firstName: 'นายรพี',
+    lastName: 'อุชชิน (ปุ๋ย)',
+    department: 'Compliance Monitoring Manager (AMO) (BKK)',
+    email: 'rapee.ujj@tif.ac.th',
+    phone: '094-549-1919',
+    role: Role.APPROVER,
+  },
+  {
+    employeeCode: '680020',
+    firstName: 'น.ส.จิณัฐตา',
+    lastName: 'สุทธาชีพ (หงษ์)',
+    department: 'Human Resources Manager/ผู้จัดการแผนกทรัพยากรบุคคล (BKK)',
+    email: 'jinutta.sut@tif.ac.th',
+    phone: '090-978-79999',
+    role: Role.APPROVER,
+  },
+  {
+    employeeCode: '680022',
+    firstName: 'น.ส.อนาฐิตา',
+    lastName: 'เชาวนภรณ์ (นัตตี้)',
+    department: 'Training Coordinator (PHS)',
+    email: 'anathita.cha@tif.ac.th',
+    phone: '065-005-3989',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '680023',
+    firstName: 'นายพสธร',
+    lastName: 'สืบสังข์ (ไฟท์)',
+    department: 'Flight Instructor (PHS)',
+    email: 'potsatorn.seu@tif.ac.th',
+    phone: '089-510-5669',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '680024',
+    firstName: 'น.ส.ประภัสสร',
+    lastName: 'ทรัพย์ศาสตร์ (เบียร์)',
+    department: 'Training Planner Manager (BKK)',
+    email: 'prapatsorn.sab@tif.ac.th',
+    phone: '087-328-5607',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '680025',
+    firstName: 'น.ส.จริยาภรณ์',
+    lastName: 'เจริญพงศ์ (อุ๋น)',
+    department: 'TKI (PHS)',
+    email: 'jariyaporn.cha@tif.ac.th',
+    phone: '099-1989-149',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '680026',
+    firstName: 'น.ส.สุชีรา',
+    lastName: 'ถนอมเมฆ (ฝ้าย)',
+    department: 'Operation Officer (PHS)',
+    email: 'suchera.tha@tif.ac.th',
+    phone: '098-261-7173',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '690003',
+    firstName: 'นางสาวทิพย์สุดา',
+    lastName: 'คงสุข (นิ้ง)',
+    department: 'Sales Manager/ผู้จัดการฝ่ายขาย (BKK)',
+    email: 'thipsuda.kho@tif.ac.th',
+    phone: '095-250-4695',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '690004',
+    firstName: 'นายสุวิชา',
+    lastName: 'บุญเลิศ (แจ็ค)',
+    department: 'Compliance Monitoring Manager (FTO) (BKK)',
+    email: 'suvicha.boo@tif.ac.th',
+    phone: '062-595-9565',
+    role: Role.APPROVER,
+  },
+  {
+    employeeCode: '690005',
+    firstName: 'นายธัชพงศ์',
+    lastName: 'คงวุฒิ (ก๊อง)',
+    department: 'เจ้าหน้าที่วางแผนซ่อมบำรุง/Maintenance (PHS)',
+    email: 'tadchapong.kho@tif.ac.th',
+    phone: '092-552-9196',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '690006',
+    firstName: 'น.ส.กิตติวรรณ',
+    lastName: 'เมณฑ์กูล (อ๊ะอาย)',
+    department: 'Sales Officer/เจ้าหน้าที่การขาย (BKK)',
+    email: 'kittiwan.men@tif.ac.th',
+    phone: '093-565-7461',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '690007',
+    firstName: 'น.ส.ภัททิยา',
+    lastName: 'สามนฑา (ดัช)',
+    department: 'Safety Management Officer (PHS)',
+    email: 'phattiya.sam@tif.ac.th',
+    phone: '092-420-8990',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '690008',
+    firstName: 'น.ส.ศุภางค์',
+    lastName: 'กำเนิดศิริ (ปลาทู)',
+    department: 'Compliance and Monitoring Officer (BKK)',
+    email: 'supang.kum@tif.ac.th',
+    phone: '084-332-6668',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '690009',
+    firstName: 'น.ส.นิชานันท์',
+    lastName: 'แซ่นึ่ง (ฟิ้นท์)',
+    department: 'Registration and Licensing Officer (BKK)',
+    email: 'nichanan.sae@tif.ac.th',
+    phone: '081-691-3600',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '690010',
+    firstName: 'น.ส.อัญชิษฐา',
+    lastName: 'ขุนล่ำ (รุ้ง)',
+    department: 'เลขานุการ (Secretary) (BKK)',
+    email: 'anchittha.khu@tif.ac.th',
+    phone: '091-034-3976',
+    role: Role.ADMIN,
+  },
+  {
+    employeeCode: '690011',
+    firstName: 'นายวัชระ',
+    lastName: 'ผลชัย (เซฟ)',
+    department: 'it support officer (BKK)',
+    email: 'watchara.pho@tif.ac.th',
+    phone: '098-042-0324',
+    role: Role.ADMIN,
+  },
+  {
+    employeeCode: '690012',
+    firstName: 'นายปรารถนา',
+    lastName: 'พัฒนศิริ (ม่ำ)',
+    department: 'Operation (BKK)',
+    email: 'pratana.pat@tif.ac.th',
+    phone: '080-000-0000',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '690013',
+    firstName: 'น.ส.วาสน์นิดา',
+    lastName: 'ชื่นสกุล (โจ๋)',
+    department: 'การขายและการตลาด (BKK)',
+    email: 'wasnida.chu@tif.ac.th',
+    phone: '094-650-5566',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '690014',
+    firstName: 'น.ส.นภัทรธิราห์',
+    lastName: 'วิทศิริ (หมิว)',
+    department: 'Operation (BKK)',
+    email: 'naphatthira.wit@tif.ac.th',
+    phone: '080-000-0000',
+    role: Role.STAFF,
+  },
+  {
+    employeeCode: '690015',
+    firstName: 'น.ส.สิริภัทร',
+    lastName: 'ปาลี (มีน)',
+    department: 'Sale (BKK)',
+    email: 'siriphat.pal@tif.ac.th',
+    phone: '061-446-3883',
+    role: Role.STAFF,
+  },
+];
+
+async function run() {
+  console.log('Starting DB migration: updating emails, keeping assets intact...');
+
+  const saltRounds = 10;
+  const defaultMemberPassword = await bcrypt.hash('TIF@2026', saltRounds);
+
+  // 1. Delete generic system accounts if they exist (both Employee and User)
+  const systemEmailsToDelete = [
+    'admin@tif.ac.th', 'admin@thaiinterflying.com',
+    'approver@tif.ac.th', 'approver@thaiinterflying.com',
+    'staff@tif.ac.th', 'staff@thaiinterflying.com',
+    'viewer@tif.ac.th', 'viewer@thaiinterflying.com'
+  ];
+
+  for (const email of systemEmailsToDelete) {
+    // Delete user
+    try {
+      await prisma.user.delete({ where: { email } });
+      console.log(`Deleted default system user: ${email}`);
+    } catch (e) {
+      // Ignore if not found
+    }
+
+    // Delete employee if exists
+    try {
+      await prisma.employee.delete({ where: { email } });
+      console.log(`Deleted default system employee: ${email}`);
+    } catch (e) {
+      // Ignore if not found
+    }
+  }
+
+  // 2. Loop through each real employee data and update or insert
+  for (const empData of tifEmployeesData) {
+    // Find employee by employeeCode (since employeeCode is unique and constant)
+    const existingEmployee = await prisma.employee.findUnique({
+      where: { employeeCode: empData.employeeCode },
+      include: { user: true }
+    });
+
+    if (existingEmployee) {
+      console.log(`Updating existing employee: ${empData.firstName} ${empData.lastName} (${empData.employeeCode})`);
+      
+      // Update Employee record
+      const updatedEmployee = await prisma.employee.update({
+        where: { id: existingEmployee.id },
+        data: {
+          firstName: empData.firstName,
+          lastName: empData.lastName,
+          department: empData.department,
+          email: empData.email,
+          phone: empData.phone,
+        }
+      });
+
+      // Update or Create User record
+      if (existingEmployee.user) {
+        await prisma.user.update({
+          where: { id: existingEmployee.user.id },
+          data: {
+            email: empData.email,
+            name: `${empData.firstName} ${empData.lastName}`,
+            role: empData.role,
+          }
+        });
+      } else {
+        await prisma.user.create({
+          data: {
+            email: empData.email,
+            password: defaultMemberPassword,
+            name: `${empData.firstName} ${empData.lastName}`,
+            role: empData.role,
+            employeeId: updatedEmployee.id,
+          }
+        });
+      }
+    } else {
+      console.log(`Creating new employee and user: ${empData.firstName} ${empData.lastName} (${empData.employeeCode})`);
+      
+      // Create Employee
+      const newEmployee = await prisma.employee.create({
+        data: {
+          employeeCode: empData.employeeCode,
+          firstName: empData.firstName,
+          lastName: empData.lastName,
+          department: empData.department,
+          email: empData.email,
+          phone: empData.phone,
+        }
+      });
+
+      // Create User
+      await prisma.user.create({
+        data: {
+          email: empData.email,
+          password: defaultMemberPassword,
+          name: `${empData.firstName} ${empData.lastName}`,
+          role: empData.role,
+          employeeId: newEmployee.id,
+        }
+      });
+    }
+  }
+
+  console.log('Migration completed successfully! No asset records were deleted.');
+}
+
+run()
+  .catch((e) => {
+    console.error('Migration failed:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

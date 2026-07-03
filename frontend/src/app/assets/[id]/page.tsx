@@ -29,6 +29,13 @@ interface AssetDetail {
   status: 'AVAILABLE' | 'BORROWED' | 'MAINTENANCE' | 'LOST' | 'RETIRED';
   imageUrl?: string;
   qrCode: string;
+  currentHolder?: {
+    id: string;
+    employeeCode: string;
+    firstName: string;
+    lastName: string;
+    department: string;
+  } | null;
 }
 
 interface BorrowHistory {
@@ -220,6 +227,40 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
             <p className="text-[11px] font-mono text-slate-500 mt-3 bg-slate-50 py-1.5 px-3 rounded-lg border border-slate-100 inline-block">
               {asset.qrCode}
             </p>
+
+            <div className="mt-4">
+              {asset.status === 'BORROWED' && asset.currentHolder ? (
+                <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-center">
+                  <p className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">ผู้ยืมในขณะนี้</p>
+                  <p className="text-xs font-bold text-rose-700 mt-1">
+                    {asset.currentHolder.firstName} {asset.currentHolder.lastName}
+                  </p>
+                  <p className="text-[10px] text-rose-500 font-semibold mt-0.5">
+                    แผนก: {asset.currentHolder.department} ({asset.currentHolder.employeeCode})
+                  </p>
+                </div>
+              ) : asset.status === 'AVAILABLE' ? (
+                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-center">
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">สถานะการครอบครอง</p>
+                  <p className="text-xs font-bold text-emerald-700 mt-1">พร้อมใช้งาน (ว่าง)</p>
+                </div>
+              ) : asset.status === 'MAINTENANCE' ? (
+                <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-center">
+                  <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">สถานะการครอบครอง</p>
+                  <p className="text-xs font-bold text-amber-700 mt-1">อยู่ระหว่างการซ่อมบำรุง</p>
+                </div>
+              ) : asset.status === 'LOST' ? (
+                <div className="p-3 bg-red-950/10 border border-red-800/20 rounded-xl text-center">
+                  <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">สถานะการครอบครอง</p>
+                  <p className="text-xs font-bold text-red-700 mt-1">สินทรัพย์สูญหาย</p>
+                </div>
+              ) : (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">สถานะการครอบครอง</p>
+                  <p className="text-xs font-bold text-slate-700 mt-1">จำหน่าย / เลิกใช้</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

@@ -12,6 +12,14 @@ interface Asset {
   name: string;
   category: string;
   qrCode: string;
+  status: 'AVAILABLE' | 'BORROWED' | 'MAINTENANCE' | 'LOST' | 'RETIRED';
+  currentHolder?: {
+    id: string;
+    employeeCode: string;
+    firstName: string;
+    lastName: string;
+    department: string;
+  } | null;
 }
 
 export default function PrintQrPage() {
@@ -131,9 +139,24 @@ export default function PrintQrPage() {
                         <div className="w-4 h-4 rounded border border-slate-300 bg-white"></div>
                       )}
                     </div>
-                    <div className="overflow-hidden">
+                    <div className="overflow-hidden w-full">
                       <p className="text-xs font-bold text-slate-800 truncate">{asset.name}</p>
-                      <p className="text-[10px] font-mono text-sky-600 mt-0.5 font-bold">{asset.assetCode}</p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                        <span className="text-[10px] font-mono text-sky-600 font-bold">{asset.assetCode}</span>
+                        {asset.status === 'BORROWED' && asset.currentHolder ? (
+                          <span className="text-[9px] bg-rose-50 text-rose-600 border border-rose-100 rounded px-1 font-semibold truncate max-w-[120px]" title={`ยืมโดย: ${asset.currentHolder.firstName} ${asset.currentHolder.lastName}`}>
+                            ผู้ยืม: {asset.currentHolder.firstName}
+                          </span>
+                        ) : asset.status === 'AVAILABLE' ? (
+                          <span className="text-[9px] bg-emerald-50 text-emerald-600 border border-emerald-100 rounded px-1 font-semibold">
+                            พร้อมใช้งาน
+                          </span>
+                        ) : asset.status === 'MAINTENANCE' ? (
+                          <span className="text-[9px] bg-amber-50 text-amber-600 border border-amber-100 rounded px-1 font-semibold">
+                            ซ่อมบำรุง
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 );
@@ -152,7 +175,7 @@ export default function PrintQrPage() {
                 selectedAssets.map((asset) => (
                   <div
                     key={asset.id}
-                    className="border-2 border-slate-800 p-3 rounded-lg flex flex-col items-center justify-between text-center bg-white w-[135px] h-[180px] mx-auto print:break-inside-avoid print:m-2"
+                    className="border-2 border-slate-800 p-3 rounded-lg flex flex-col items-center justify-between text-center bg-white w-[135px] h-[195px] mx-auto print:break-inside-avoid print:m-2"
                   >
                     {/* Header Logo Label */}
                     <div className="text-[8px] font-bold text-slate-900 tracking-wider border-b border-slate-200 pb-1.5 w-full truncate">
@@ -176,6 +199,15 @@ export default function PrintQrPage() {
                       <p className="text-[8px] text-slate-600 font-bold truncate leading-tight">
                         {asset.name}
                       </p>
+                      {asset.status === 'BORROWED' && asset.currentHolder ? (
+                        <p className="text-[7.5px] text-rose-600 font-extrabold truncate bg-rose-50 border border-rose-200 rounded py-0.5 mt-0.5 px-0.5 leading-none">
+                          ผู้ยืม: {asset.currentHolder.firstName}
+                        </p>
+                      ) : (
+                        <p className="text-[7.5px] text-slate-400 font-semibold truncate border border-slate-100 rounded py-0.5 mt-0.5 px-0.5 leading-none bg-slate-50/50">
+                          {asset.status === 'AVAILABLE' ? 'พร้อมใช้งาน' : asset.status === 'MAINTENANCE' ? 'ซ่อมบำรุง' : 'ไม่พร้อมใช้'}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))

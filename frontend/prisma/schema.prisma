@@ -159,7 +159,7 @@ model SystemSetting {
   companyNameTh           String   @default("บริษัท ไทย อินเตอร์ ฟลายอิ้ง จำกัด")
   companyNameEn           String   @default("Thai Inter Flying Co., Ltd.")
   businessType            String   @default("สถาบันฝึกอบรมการบิน / Aviation Training Academy")
-  contactEmail            String   @default("info@thaiinterflying.com")
+  contactEmail            String   @default("info@tif.ac.th")
   maxBorrowDays           Int      @default(7)
   autoMaintenanceOnDamaged Boolean  @default(true)
   updatedAt               DateTime @updatedAt

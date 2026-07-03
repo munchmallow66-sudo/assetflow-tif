@@ -113,14 +113,16 @@ thai-inter-flying-borrow-system/
 
 ## 👤 บัญชีผู้ใช้งานสำหรับการทดสอบระบบ (Default Credentials)
 
-สคริปต์ DB Seeder ทำการสร้างผู้ใช้งานและพนักงานเริ่มต้นไว้ให้เพื่อความสะดวกในการทดสอบฟังก์ชันตามบทบาทดังนี้:
+สคริปต์ DB Seeder ทำการสร้างผู้ใช้งานจากรายชื่อพนักงานทั้งหมด โดยใช้รหัสผ่านเริ่มต้นร่วมกันดังนี้:
 
-| บทบาท (Role) | อีเมล (Email) | รหัสผ่าน (Password) | สิทธิ์การทำงานหลัก |
-| :--- | :--- | :--- | :--- |
-| **ADMIN** | `admin@thaiinterflying.com` | `Admin@TIF2026` | จัดการผู้ใช้/พนักงาน, จัดการอุปกรณ์, อนุมัติการยืม, บันทึกรับคืน, ดูรายงาน, ดู Audit Logs |
-| **APPROVER** | `approver@thaiinterflying.com` | `Approver@TIF2026` | อนุมัติหรือปฏิเสธคำขอยืม, ดูรายงานความเสียหาย/ค้างส่ง |
-| **STAFF** | `staff@thaiinterflying.com` | `Staff@TIF2026` | เข้าสู่ระบบ, เช็คสินทรัพย์ว่าง, สร้างคำขอยืม, ยกเลิกคำขอยืมตนเอง |
-| **VIEWER** | `viewer@thaiinterflying.com` | `Viewer@TIF2026` | เข้าดูสถิติ แดชบอร์ด และรายงานระบบเท่านั้น |
+* **รหัสผ่านเข้าสู่ระบบสำหรับทุกบัญชี:** `TIF@2026`
+
+คุณสามารถใช้บัญชีพนักงานตามบทบาท (Role) ที่ต้องการทดสอบดังนี้:
+
+* **ADMIN (ผู้ดูแลระบบ):** `watchara.pho@tif.ac.th` (คุณเซฟ), `punpisut.nur@tif.ac.th` (คุณแม็ค), `panu.nim@tif.ac.th` (คุณหนึ่ง), `jarkarin.kun@tif.ac.th` (คุณหน่อย), `anchittha.khu@tif.ac.th` (คุณรุ้ง)
+* **APPROVER (ผู้อนุมัติ):** `winai.kas@tif.ac.th` (คุณวินัย), `phat.pho@tif.ac.th` (คุณพัฒน์), `rapee.ujj@tif.ac.th` (คุณปุ๋ย), `suvicha.boo@tif.ac.th` (คุณแจ็ค) และคนอื่น ๆ ที่มีบทบาท APPROVER
+* **STAFF (พนักงานทั่วไป/ผู้ยืม):** `soontorn.wut@tif.ac.th` (ครูสุน), `nirut.peh@tif.ac.th` (คุณรุทธ์) และพนักงานคนอื่น ๆ ทั้งหมดในรายชื่อ
+
 
 ---
 
