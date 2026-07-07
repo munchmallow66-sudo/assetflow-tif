@@ -77,12 +77,7 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12 sm:pt-40 text-center flex flex-col items-center">
-        {/* Tagline Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-semibold mb-6 animate-fade-in">
-          <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" />
-          TIF AssetFlow — Version 1.0
-        </div>
-        
+
         {/* Main Headline */}
         <h1 className="text-4xl sm:text-6xl font-extrabold text-white leading-tight tracking-tight max-w-4xl font-heading mb-6">
           จัดการคลังอุปกรณ์และสินทรัพย์ <br />
