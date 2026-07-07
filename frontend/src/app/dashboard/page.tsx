@@ -182,7 +182,7 @@ export default function DashboardPage() {
         <div className="space-y-2 z-10">
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">ยินดีต้อนรับ, {user?.name}</h1>
           <p className="text-sky-100 text-xs md:text-sm max-w-xl font-medium leading-relaxed">
-            ระบบบริหารจัดการยืมและคืนครุภัณฑ์/อุปกรณ์การบิน บริษัท Thai Inter Flying จำกัด ตรวจสอบสถานะสินทรัพย์และทำรายการขอยืมได้สะดวกรวดเร็ว
+            ระบบบริหารจัดการยืมและคืนครุภัณฑ์/อุปกรณ์ บริษัท Thai Inter Flying จำกัด ตรวจสอบสถานะสินทรัพย์และทำรายการขอยืมได้สะดวกรวดเร็ว
           </p>
         </div>
         <div className="shrink-0 flex gap-3 z-10">
@@ -583,14 +583,14 @@ export default function DashboardPage() {
               </div>
               <div className="p-3 border border-slate-100 rounded-xl space-y-0.5">
                 <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wide">แผนก/ฝ่าย</span>
-                <p className="font-bold text-slate-700 truncate">{user?.employee?.department || 'สถาบันการบิน'}</p>
+                <p className="font-bold text-slate-700 truncate">{user?.employee?.department || 'ฝ่ายงานบริษัท'}</p>
               </div>
             </div>
 
             <div className="border border-slate-100 rounded-xl p-3 bg-slate-50/20">
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">มาตรฐานการบิน</p>
+              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wide mb-1">มาตรฐานการยืม-คืน</p>
               <p className="text-[10px] text-slate-500 leading-relaxed">
-                การยืมครุภัณฑ์ทุกชิ้นจะต้องผ่านการอนุมัติความเหมาะสม และส่งคืนในสภาพปกติเพื่อไม่ให้กระทบต่อภารกิจฝึกบินและการเรียนการสอนของสถาบันฯ
+                การยืมครุภัณฑ์ทุกชิ้นจะต้องผ่านการอนุมัติความเหมาะสม และส่งคืนในสภาพปกติเพื่อความต่อเนื่องและปลอดภัยในการใช้งานของบริษัท
               </p>
             </div>
           </div>

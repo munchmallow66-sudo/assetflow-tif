@@ -85,7 +85,7 @@ export default function LandingPage() {
         
         {/* Main Headline */}
         <h1 className="text-4xl sm:text-6xl font-extrabold text-white leading-tight tracking-tight max-w-4xl font-heading mb-6">
-          จัดการคลังอุปกรณ์การบิน <br />
+          จัดการคลังอุปกรณ์และสินทรัพย์ <br />
           <span className="bg-gradient-to-r from-sky-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
             ให้ง่าย แม่นยำ และปลอดภัย
           </span>
@@ -93,8 +93,8 @@ export default function LandingPage() {
         
         {/* Sub-headline */}
         <p className="text-slate-450 text-sm sm:text-base max-w-2xl font-medium leading-relaxed mb-8">
-          ระบบควบคุมคลังครุภัณฑ์และเครื่องมือฝึกบินแบบดิจิทัลครบวงจร ยืม-คืนผ่าน QR Code รวดเร็ว
-          และรายงานสถานะเครื่องมือการบินของสถาบัน **Thai Inter Flying** ได้ทันทีในระบบเดียว
+          ระบบควบคุมคลังครุภัณฑ์และอุปกรณ์ของบริษัทแบบดิจิทัลครบวงจร ยืม-คืนผ่าน QR Code รวดเร็ว
+          และรายงานสถานะครุภัณฑ์และสินทรัพย์ของ **Thai Inter Flying** ได้ทันทีในระบบเดียว
         </p>
         
         {/* CTAs */}
@@ -122,7 +122,7 @@ export default function LandingPage() {
       <section id="features" className="scroll-mt-28 relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 border-t border-slate-900/85">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
           <h2 className="text-xs font-bold text-sky-400 uppercase tracking-widest font-heading">System Capability</h2>
-          <p className="text-3xl font-bold text-white tracking-wide font-heading">ประสิทธิภาพการจัดการคลังครุภัณฑ์การบิน</p>
+          <p className="text-3xl font-bold text-white tracking-wide font-heading">ประสิทธิภาพการจัดการคลังครุภัณฑ์และอุปกรณ์</p>
           <p className="text-slate-400 text-sm">ฟังก์ชันที่ผ่านการออกแบบตามขั้นตอนปฏิบัติงานจริง สะดวก ปลอดภัย และรัดกุม</p>
         </div>
 
@@ -136,7 +136,7 @@ export default function LandingPage() {
               </div>
               <h3 className="text-lg font-bold text-white font-heading">สแกนยืม-คืนรวดเร็วผ่าน QR Code</h3>
               <p className="text-slate-400 text-xs leading-relaxed font-medium">
-                ทำรายการยืม-คืนอุปกรณ์หรือครุภัณฑ์สำหรับขึ้นบินได้ทันทีผ่านการสแกนด้วยโทรศัพท์หรือแท็บเล็ต 
+                ทำรายการยืม-คืนอุปกรณ์หรือครุภัณฑ์ได้ทันทีผ่านการสแกนด้วยโทรศัพท์หรือแท็บเล็ต 
                 ลดขั้นตอนการกรอกข้อมูล และลดความผิดพลาดด้านเอกสาร
               </p>
             </div>
@@ -170,8 +170,8 @@ export default function LandingPage() {
               </div>
               <h3 className="text-lg font-bold text-white font-heading">ระบบอนุมัติคำขอ</h3>
               <p className="text-slate-400 text-xs leading-relaxed font-medium">
-                เชื่อมต่อขั้นตอนส่งคำขอสำหรับอุปกรณ์ที่ต้องได้รับการอนุมัติจากอาจารย์การบินหรือแอดมิน 
-                เพื่อการวางแผนเที่ยวบินฝึกสอนที่รัดกุมและปลอดภัย
+                เชื่อมต่อขั้นตอนส่งคำขอสำหรับอุปกรณ์ที่ต้องได้รับการอนุมัติจากผู้อนุมัติหรือแอดมิน 
+                เพื่อการบริหารจัดการคลังอุปกรณ์ที่รัดกุมและปลอดภัย
               </p>
             </div>
           </div>
@@ -184,8 +184,8 @@ export default function LandingPage() {
               </div>
               <h3 className="text-lg font-bold text-white font-heading">บันทึกประวัติการซ่อมบำรุง</h3>
               <p className="text-slate-400 text-xs leading-relaxed font-medium">
-                มีบันทึกรายงานผลการตรวจเช็คสภาพความเสื่อมถอยหรือปัญหาของอุปกรณ์การบินหลังเสร็จสิ้นภารกิจ 
-                พร้อมแจ้งเตือนแอดมินคลังพัสดุทันทีหากต้องส่งซ่อมบำรุง
+                มีบันทึกรายงานผลการตรวจเช็คสภาพความเสื่อมถอยหรือปัญหาของอุปกรณ์หลังเสร็จสิ้นการใช้งาน 
+                พร้อมแจ้งเตือนแอดมินดูแลระบบทันทีหากต้องส่งซ่อมบำรุง
               </p>
             </div>
             {/* Visual Design for Card 4 */}
@@ -197,15 +197,15 @@ export default function LandingPage() {
               <div className="space-y-1 text-[10px]">
                 <div className="flex items-center gap-2 text-slate-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>ตรวจสอบแบตเตอรี่หูฟัง</span>
+                  <span>ตรวจสอบสถานะแบตเตอรี่อุปกรณ์</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>เช็คค่าความถี่หน้าปัดวิทยุ</span>
+                  <span>เช็คความพร้อมก่อนเปิดใช้งาน</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>ทดสอบระบบรับสัญญาณ GPS</span>
+                  <span>ทดสอบระบบและซอฟต์แวร์</span>
                 </div>
               </div>
             </div>
@@ -241,7 +241,7 @@ export default function LandingPage() {
                     <FileText size={18} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white group-hover:text-sky-400 transition-colors duration-200">คู่มือสำหรับผู้ยืม (ศิษย์การบิน & บุคลากร)</h4>
+                    <h4 className="text-sm font-bold text-white group-hover:text-sky-400 transition-colors duration-200">คู่มือสำหรับผู้ยืม (พนักงาน & บุคลากร)</h4>
                     <p className="text-[10px] text-slate-500 font-medium">PDF Document • 4.2 MB</p>
                   </div>
                 </div>
@@ -259,7 +259,7 @@ export default function LandingPage() {
                     <FileText size={18} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors duration-200">คู่มือสำหรับแอดมินและผู้อนุมัติ (Dispatcher & Admin)</h4>
+                    <h4 className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors duration-200">คู่มือสำหรับแอดมินและผู้อนุมัติ (Approver & Admin)</h4>
                     <p className="text-[10px] text-slate-500 font-medium">PDF Document • 5.8 MB</p>
                   </div>
                 </div>
@@ -272,7 +272,7 @@ export default function LandingPage() {
           <div id="support" className="scroll-mt-28 lg:col-span-6 space-y-8">
             <div>
               <h2 className="text-xs font-bold text-indigo-400 uppercase tracking-widest font-heading mb-2">Helpdesk Channels</h2>
-              <h3 className="text-3xl font-bold text-white font-heading">ฝ่ายสนับสนุนการปฏิบัติงานบิน</h3>
+              <h3 className="text-3xl font-bold text-white font-heading">ฝ่ายสนับสนุนระบบและไอที</h3>
               <p className="text-slate-450 text-sm mt-3 leading-relaxed">
                 หากพบปัญหาเกี่ยวกับการอนุมัติใช้งานคลังครุภัณฑ์ หรือต้องการลงทะเบียนอุปกรณ์ตัวใหม่ 
                 กรุณาติดต่อเจ้าหน้าที่ดูแลระบบโดยตรงตามช่องทางด้านล่างนี้
@@ -300,7 +300,7 @@ export default function LandingPage() {
               <div className="p-6 bg-slate-900/30 border border-slate-850 rounded-2xl space-y-4">
                 <div className="flex items-center gap-2.5 text-indigo-400">
                   <Activity size={18} />
-                  <h4 className="text-sm font-bold text-white">ฝ่ายคลังครุภัณฑ์การบิน</h4>
+                  <h4 className="text-sm font-bold text-white">ฝ่ายบริหารคลังและสินทรัพย์</h4>
                 </div>
                 <ul className="space-y-3 text-[11px] text-slate-450 font-medium">
                   <li className="flex items-center gap-2.5">
@@ -326,7 +326,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-4">
             <Link href="/login" className="hover:text-slate-350 transition-colors">เข้าสู่ระบบระบบ</Link>
             <span>•</span>
-            <a href="https://thaiinterflying.com" target="_blank" rel="noopener noreferrer" className="hover:text-slate-350 transition-colors">เว็บไซต์สถาบันการบิน</a>
+            <a href="https://thaiinterflying.com" target="_blank" rel="noopener noreferrer" className="hover:text-slate-350 transition-colors">เว็บไซต์บริษัท</a>
           </div>
         </div>
       </footer>

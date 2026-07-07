@@ -305,10 +305,10 @@ export default function NewBorrowPage() {
               <div className="space-y-1">
                 <h2 className="text-base font-bold text-slate-850 dark:text-white flex items-center gap-2">
                   <Box className="text-sky-500" size={18} />
-                  <span>ขั้นตอนที่ 1: เลือกครุภัณฑ์/อุปกรณ์การบิน</span>
+                  <span>ขั้นตอนที่ 1: เลือกครุภัณฑ์/อุปกรณ์</span>
                 </h2>
                 <p className="text-slate-400 dark:text-slate-500 text-[11px] leading-relaxed">
-                  กรุณาเลือกอุปกรณ์การบินหรือครุภัณฑ์ที่ต้องการยื่นขอยืม โดยระบบจะแสดงเฉพาะครุภัณฑ์ที่มีสถานะว่างพร้อมใช้งานในขณะนี้
+                  กรุณาเลือกอุปกรณ์หรือครุภัณฑ์ที่ต้องการยื่นขอยืม โดยระบบจะแสดงเฉพาะครุภัณฑ์ที่มีสถานะว่างพร้อมใช้งานในขณะนี้
                 </p>
               </div>
 

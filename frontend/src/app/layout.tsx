@@ -6,7 +6,7 @@ import { ToastProvider } from "@/components/providers/ToastProvider";
 import AppLayout from "@/components/layout/AppLayout";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://assetflow-tif.vercel.app"),
+  metadataBase: new URL("https://assetflow.tif.ac.th"),
 
   // ===== Core Metadata =====
   title: {
@@ -14,20 +14,20 @@ export const metadata: Metadata = {
     template: "%s | TIF AssetFlow",
   },
   description:
-    "ระบบบริหารจัดการยืมและคืนครุภัณฑ์ อุปกรณ์การบิน สำหรับบริษัท Thai Inter Flying จำกัด (สถาบันการบิน) — ยืมคืนง่าย ตรวจสอบสถานะได้ทันที สะดวก รวดเร็ว ปลอดภัย",
+    "ระบบบริหารจัดการยืมและคืนครุภัณฑ์ อุปกรณ์ สำหรับบริษัท Thai Inter Flying จำกัด — ยืมคืนง่าย ตรวจสอบสถานะได้ทันที สะดวก รวดเร็ว ปลอดภัย",
   keywords: [
     "ระบบจัดการสินทรัพย์",
     "ยืม-คืนสินทรัพย์",
-    "ครุภัณฑ์การบิน",
+    "ครุภัณฑ์",
     "Thai Inter Flying",
-    "สถาบันการบิน",
+    "บริษัท",
     "asset management",
     "borrow return system",
     "TIF AssetFlow",
-    "aviation equipment management",
+    "equipment management",
     "ระบบยืมของ",
     "ระบบจัดการครุภัณฑ์",
-    "อุปกรณ์การบิน",
+    "อุปกรณ์",
   ],
   authors: [{ name: "Thai Inter Flying Co., Ltd." }],
   creator: "Thai Inter Flying",
@@ -51,11 +51,11 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "th_TH",
-    url: "https://assetflow-tif.vercel.app",
+    url: "https://assetflow.tif.ac.th",
     siteName: "TIF AssetFlow",
     title: "ระบบจัดการยืม-คืนสินทรัพย์ | Thai Inter Flying",
     description:
-      "ระบบบริหารจัดการยืมและคืนครุภัณฑ์ อุปกรณ์การบินสำหรับ Thai Inter Flying — ยืมคืนง่าย ตรวจสอบสถานะได้ทันที",
+      "ระบบบริหารจัดการยืมและคืนครุภัณฑ์ อุปกรณ์สำหรับ Thai Inter Flying — ยืมคืนง่าย ตรวจสอบสถานะได้ทันที",
     images: [
       {
         url: "/opengraph-image",
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ระบบจัดการยืม-คืนสินทรัพย์ | Thai Inter Flying",
     description:
-      "ระบบบริหารจัดการยืมและคืนครุภัณฑ์ อุปกรณ์การบินสำหรับ Thai Inter Flying — ยืมคืนง่าย ตรวจสอบสถานะได้ทันที",
+      "ระบบบริหารจัดการยืมและคืนครุภัณฑ์ อุปกรณ์สำหรับ Thai Inter Flying — ยืมคืนง่าย ตรวจสอบสถานะได้ทันที",
     images: ["/opengraph-image"],
   },
 

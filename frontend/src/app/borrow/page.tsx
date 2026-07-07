@@ -322,7 +322,7 @@ export default function BorrowPage() {
           <div className="space-y-2">
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">รายการยืม-คืนสินทรัพย์</h1>
             <p className="text-slate-400 text-xs md:text-sm max-w-xl font-normal leading-relaxed">
-              ประวัติการทำรายการยื่นขอยืม คืนสภาพ และพิจารณาอนุมัติครุภัณฑ์การบินของสถาบันฯ
+              ประวัติการทำรายการยื่นขอยืม คืนสภาพ และพิจารณาอนุมัติครุภัณฑ์/อุปกรณ์ของบริษัท
             </p>
           </div>
           {(user?.role === 'STAFF' || user?.role === 'ADMIN' || user?.role === 'APPROVER') && (
