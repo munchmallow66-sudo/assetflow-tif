@@ -435,6 +435,15 @@ async function main() {
       phone: '061-446-3883',
       role: Role.STAFF,
     },
+    {
+      employeeCode: '690016',
+      firstName: 'อรพรรณ',
+      lastName: 'อภิชัยกุล (หนึ่ง)',
+      department: 'Sale manager (BKK)',
+      email: 'oraphan.api@tif.ac.th',
+      phone: null,
+      role: Role.STAFF,
+    },
   ];
 
   for (const empData of tifEmployeesData) {
