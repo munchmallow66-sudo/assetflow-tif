@@ -283,7 +283,7 @@ export default function LandingPage() {
                 <ul className="space-y-3 text-[11px] text-slate-450 font-medium">
                   <li className="flex items-center gap-2.5">
                     <Mail size={14} className="text-slate-600" />
-                    <span>it@tif.ac.th</span>
+                    <span>watchara.pho@tif.ac.th</span>
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Phone size={14} className="text-slate-600" />
