@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, use } from 'react';
+import { useLanguage } from '@/components/providers/LanguageProvider';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -24,6 +25,7 @@ type AssetForm = z.infer<typeof assetSchema>;
 export default function EditAssetPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const { t, language } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -59,7 +61,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
         setImageUrl(data.imageUrl || null);
         setCloudinaryPublicId(data.cloudinaryPublicId || null);
       } catch (err) {
-        setErrorMsg('ไม่สามารถโหลดข้อมูลสินทรัพย์ได้');
+        setErrorMsg(language === 'th' ? 'ไม่สามารถโหลดข้อมูลสินทรัพย์ได้' : 'Failed to load asset details');
       } finally {
         setLoading(false);
       }
@@ -84,7 +86,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
       setImageUrl(res.data.url);
       setCloudinaryPublicId(res.data.publicId);
     } catch (err: any) {
-      setErrorMsg('อัปโหลดรูปภาพล้มเหลว กรุณาลองใหม่อีกครั้ง');
+      setErrorMsg(language === 'th' ? 'อัปโหลดรูปภาพล้มเหลว กรุณาลองใหม่อีกครั้ง' : 'Image upload failed. Please try again.');
     } finally {
       setUploadingImage(false);
     }
@@ -104,7 +106,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
       await api.patch(`/assets/${id}`, payload);
       router.push('/assets');
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || 'การแก้ไขสินทรัพย์ล้มเหลว');
+      setErrorMsg(err.response?.data?.message || (language === 'th' ? 'การแก้ไขสินทรัพย์ล้มเหลว' : 'Failed to update asset'));
       setSubmitting(false);
     }
   };
@@ -125,14 +127,20 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
           className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-xs font-semibold"
         >
           <ArrowLeft size={16} />
-          <span>ย้อนกลับไปหน้าสินทรัพย์</span>
+          <span>{language === 'th' ? 'ย้อนกลับไปหน้าสินทรัพย์' : 'Back to Assets'}</span>
         </Link>
       </div>
 
       <div className="bg-white p-8 border border-slate-100 rounded-2xl shadow-sm space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">แก้ไขข้อมูลสินทรัพย์</h1>
-          <p className="text-slate-500 text-xs mt-1">แก้ไขรายละเอียดข้อมูลครุภัณฑ์รหัส: {id}</p>
+          <h1 className="text-2xl font-bold text-slate-800">
+            {language === 'th' ? 'แก้ไขข้อมูลสินทรัพย์' : 'Edit Asset Details'}
+          </h1>
+          <p className="text-slate-500 text-xs mt-1">
+            {language === 'th'
+              ? `แก้ไขรายละเอียดข้อมูลครุภัณฑ์รหัส: ${id}`
+              : `Edit equipment details for code: ${id}`}
+          </p>
         </div>
 
         {errorMsg && (
@@ -144,45 +152,59 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-slate-700 text-xs font-bold mb-2">รหัสสินทรัพย์ (Asset Code) *</label>
+              <label className="block text-slate-700 text-xs font-bold mb-2">
+                {language === 'th' ? 'รหัสสินทรัพย์ (Asset Code) *' : 'Asset Code *'}
+              </label>
               <input
                 type="text"
                 {...register('assetCode')}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-xs text-slate-700 focus:outline-none"
               />
               {errors.assetCode && (
-                <p className="text-red-500 text-[10px] mt-1.5 font-medium">{errors.assetCode.message}</p>
+                <p className="text-red-500 text-[10px] mt-1.5 font-medium">
+                  {language === 'th' ? errors.assetCode.message : 'Please enter asset code'}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="block text-slate-700 text-xs font-bold mb-2">หมวดหมู่ (Category) *</label>
+              <label className="block text-slate-700 text-xs font-bold mb-2">
+                {language === 'th' ? 'หมวดหมู่ (Category) *' : 'Category *'}
+              </label>
               <input
                 type="text"
                 {...register('category')}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-xs text-slate-700 focus:outline-none"
               />
               {errors.category && (
-                <p className="text-red-500 text-[10px] mt-1.5 font-medium">{errors.category.message}</p>
+                <p className="text-red-500 text-[10px] mt-1.5 font-medium">
+                  {language === 'th' ? errors.category.message : 'Please enter category'}
+                </p>
               )}
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-700 text-xs font-bold mb-2">ชื่อสินทรัพย์ *</label>
+            <label className="block text-slate-700 text-xs font-bold mb-2">
+              {language === 'th' ? 'ชื่อสินทรัพย์ *' : 'Asset Name *'}
+            </label>
             <input
               type="text"
               {...register('name')}
               className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-xs text-slate-700 focus:outline-none"
             />
             {errors.name && (
-              <p className="text-red-500 text-[10px] mt-1.5 font-medium">{errors.name.message}</p>
+              <p className="text-red-500 text-[10px] mt-1.5 font-medium">
+                {language === 'th' ? errors.name.message : 'Please enter asset name'}
+              </p>
             )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-slate-700 text-xs font-bold mb-2">หมายเลขซีเรียล</label>
+              <label className="block text-slate-700 text-xs font-bold mb-2">
+                {language === 'th' ? 'หมายเลขซีเรียล' : 'Serial Number'}
+              </label>
               <input
                 type="text"
                 {...register('serialNumber')}
@@ -191,21 +213,35 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
             </div>
 
             <div>
-              <label className="block text-slate-700 text-xs font-bold mb-2">สถานะสินทรัพย์ *</label>
+              <label className="block text-slate-700 text-xs font-bold mb-2">
+                {language === 'th' ? 'สถานะสินทรัพย์ *' : 'Asset Status *'}
+              </label>
               <select
                 {...register('status')}
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 text-xs text-slate-700 focus:outline-none"
               >
-                <option value="AVAILABLE">พร้อมใช้งาน (AVAILABLE)</option>
-                <option value="BORROWED">ถูกยืมอยู่ (BORROWED)</option>
-                <option value="MAINTENANCE">ซ่อมบำรุง (MAINTENANCE)</option>
-                <option value="LOST">สูญหาย (LOST)</option>
-                <option value="RETIRED">เลิกใช้งาน (RETIRED)</option>
+                <option value="AVAILABLE">
+                  {language === 'th' ? 'พร้อมใช้งาน (AVAILABLE)' : 'Available (AVAILABLE)'}
+                </option>
+                <option value="BORROWED">
+                  {language === 'th' ? 'อยู่ระหว่างการยืม (BORROWED)' : 'Borrowed (BORROWED)'}
+                </option>
+                <option value="MAINTENANCE">
+                  {language === 'th' ? 'ซ่อมบำรุง (MAINTENANCE)' : 'Maintenance (MAINTENANCE)'}
+                </option>
+                <option value="LOST">
+                  {language === 'th' ? 'สูญหาย (LOST)' : 'Lost (LOST)'}
+                </option>
+                <option value="RETIRED">
+                  {language === 'th' ? 'เลิกใช้งาน (RETIRED)' : 'Retired (RETIRED)'}
+                </option>
               </select>
             </div>
 
             <div>
-              <label className="block text-slate-700 text-xs font-bold mb-2">รหัส QR Code *</label>
+              <label className="block text-slate-700 text-xs font-bold mb-2">
+                {language === 'th' ? 'รหัส QR Code *' : 'QR Code Data *'}
+              </label>
               <input
                 type="text"
                 {...register('qrCode')}
@@ -215,14 +251,16 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
           </div>
 
           <div>
-            <label className="block text-slate-700 text-xs font-bold mb-2">รูปภาพประกอบสินทรัพย์</label>
+            <label className="block text-slate-700 text-xs font-bold mb-2">
+              {language === 'th' ? 'รูปภาพประกอบสินทรัพย์' : 'Asset Image'}
+            </label>
             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-200 border-dashed rounded-xl relative hover:border-sky-400 transition-colors">
               <div className="space-y-2 text-center">
                 {imageUrl ? (
                   <div className="flex flex-col items-center">
                     <img src={imageUrl} alt="Uploaded preview" className="h-32 object-cover rounded-lg border mb-2" />
                     <label className="relative cursor-pointer bg-white rounded-md font-semibold text-sky-500 hover:text-sky-600 focus-within:outline-none text-[10px]">
-                      <span>เปลี่ยนรูปภาพ</span>
+                      <span>{language === 'th' ? 'เปลี่ยนรูปภาพ' : 'Change Image'}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -236,7 +274,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
                     <Upload className="mx-auto h-10 w-10 text-slate-400" />
                     <div className="flex text-xs text-slate-500">
                       <label className="relative cursor-pointer bg-white rounded-md font-semibold text-sky-500 hover:text-sky-600 focus-within:outline-none">
-                        <span>อัปโหลดรูปภาพ</span>
+                        <span>{language === 'th' ? 'อัปโหลดรูปภาพ' : 'Upload image'}</span>
                         <input
                           type="file"
                           accept="image/*"
@@ -257,7 +295,9 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
           </div>
 
           <div>
-            <label className="block text-slate-700 text-xs font-bold mb-2">รายละเอียดเพิ่มเติม</label>
+            <label className="block text-slate-700 text-xs font-bold mb-2">
+              {language === 'th' ? 'รายละเอียดเพิ่มเติม' : 'Additional Details'}
+            </label>
             <textarea
               {...register('description')}
               rows={3}
@@ -270,14 +310,16 @@ export default function EditAssetPage({ params }: { params: Promise<{ id: string
               href="/assets"
               className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs transition-colors cursor-pointer"
             >
-              ยกเลิก
+              {language === 'th' ? 'ยกเลิก' : 'Cancel'}
             </Link>
             <button
               type="submit"
               disabled={submitting || uploadingImage}
               className="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold text-xs transition-colors shadow-md shadow-sky-500/10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {submitting ? 'กำลังบันทึก...' : 'บันทึกการแก้ไข'}
+              {submitting
+                ? language === 'th' ? 'กำลังบันทึก...' : 'Saving...'
+                : language === 'th' ? 'บันทึกการแก้ไข' : 'Save Changes'}
             </button>
           </div>
         </form>

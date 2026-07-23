@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import api from '@/lib/api';
+import { useLanguage } from '@/components/providers/LanguageProvider';
 import { 
   ArrowLeft, 
   Box, 
@@ -50,6 +51,7 @@ interface AvailableAsset {
 
 export default function NewBorrowPage() {
   const router = useRouter();
+  const { t, language } = useLanguage();
   const [assets, setAssets] = useState<AvailableAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -108,13 +110,13 @@ export default function NewBorrowPage() {
           }
         }
       } catch (err) {
-        setErrorMsg('ไม่สามารถดึงข้อมูลสินทรัพย์ได้');
+        setErrorMsg(language === 'th' ? 'ไม่สามารถดึงข้อมูลสินทรัพย์ได้' : 'Failed to retrieve asset data');
       } finally {
         setLoading(false);
       }
     };
     fetchAvailableAssets();
-  }, [setValue]);
+  }, [setValue, language]);
 
   // Make sure canvas sizing and scaling matches screen resolution
   useEffect(() => {
@@ -133,9 +135,9 @@ export default function NewBorrowPage() {
     const matched = assets.find((a) => a.assetCode === scannedText || a.id === scannedText);
     if (matched) {
       setValue('assetId', matched.id);
-      alert(`ค้นพบและเลือกสินทรัพย์: ${matched.name}`);
+      alert(language === 'th' ? `ค้นพบและเลือกสินทรัพย์: ${matched.name}` : `Asset found and selected: ${matched.name}`);
     } else {
-      alert(`ไม่พบสินทรัพย์ที่มีรหัส QR: "${scannedText}" ในระบบ หรือสินทรัพย์นี้ไม่พร้อมใช้งาน`);
+      alert(language === 'th' ? `ไม่พบสินทรัพย์ที่มีรหัส QR: "${scannedText}" ในระบบ หรือสินทรัพย์นี้ไม่พร้อมใช้งาน` : `No available asset with QR code: "${scannedText}" found in the system`);
     }
   };
 
@@ -227,144 +229,78 @@ export default function NewBorrowPage() {
       await api.post('/borrow-requests', payload);
       router.push('/borrow');
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || 'การยื่นคำขอยืมล้มเหลว');
+      setErrorMsg(err.response?.data?.message || (language === 'th' ? 'การยื่นคำขอยืมล้มเหลว' : 'Failed to submit borrow request'));
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-12">
-      {/* Back link */}
-      <div>
-        <Link
-          href="/borrow"
-          className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-xs font-semibold animate-fade-in"
-        >
-          <ArrowLeft size={16} />
-          <span>ย้อนกลับไปหน้ารายการยืม</span>
+    <div className="max-w-2xl mx-auto p-4 md:p-8">
+      <div className="mb-8">
+        <Link href="/borrow" className="text-slate-400 hover:text-sky-500 flex items-center gap-1 text-xs mb-4">
+          <ArrowLeft size={14} />
+          {language === 'th' ? 'กลับสู่รายการขอยืม' : 'Back to Borrow List'}
         </Link>
+        <h1 className="text-2xl font-bold text-slate-850 dark:text-white">
+          {language === 'th' ? 'ขอยืมครุภัณฑ์ใหม่' : 'New Borrow Request'}
+        </h1>
+        <p className="text-slate-500 text-xs mt-1">
+          {language === 'th' ? 'กรุณาระบุรายละเอียดสินทรัพย์และข้อมูลการใช้งาน' : 'Please specify asset details and usage information'}
+        </p>
       </div>
 
-      {/* Progress Wizard Bar */}
-      <div className="bg-white dark:bg-slate-900 p-5 border border-slate-150/60 dark:border-slate-800 rounded-3xl shadow-sm animate-fade-in">
-        <div className="flex items-center justify-between max-w-md mx-auto relative px-4">
-          <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-[2px] bg-slate-100 dark:bg-slate-800 z-0">
-            <div 
-              className="h-full bg-sky-500 transition-all duration-300"
-              style={{ width: `${((step - 1) / 2) * 100}%` }}
-            ></div>
-          </div>
-
-          {[
-            { label: 'เลือกครุภัณฑ์', num: 1 },
-            { label: 'ข้อมูลการยืม', num: 2 },
-            { label: 'ลงนามและยืนยัน', num: 3 }
-          ].map((s) => (
-            <button
-              key={s.num}
-              type="button"
-              disabled={s.num > step}
-              onClick={() => {
-                if (s.num < step) setStep(s.num);
-              }}
-              className="z-10 flex flex-col items-center gap-1.5 focus:outline-none cursor-pointer disabled:cursor-not-allowed"
-            >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
-                ${s.num < step ? 'bg-emerald-500 text-white shadow-md' : ''}
-                ${s.num === step ? 'bg-sky-500 text-white ring-4 ring-sky-100 dark:ring-sky-950/40 shadow-lg' : ''}
-                ${s.num > step ? 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-600' : ''}
-              `}>
-                {s.num < step ? <Check size={14} /> : s.num}
-              </div>
-              <span className={`text-[10px] font-bold ${s.num === step ? 'text-sky-500' : 'text-slate-400 dark:text-slate-500'}`}>{s.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main card panel */}
-      <div className="bg-white dark:bg-slate-900 p-6 md:p-8 border border-slate-150/60 dark:border-slate-800 rounded-3xl shadow-sm space-y-6 relative overflow-hidden animate-fade-in">
-        {errorMsg && (
-          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs font-medium flex items-center gap-2">
-            <Info size={14} className="shrink-0" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
-
-        {submitting && (
-          <div className="absolute inset-0 bg-white/85 dark:bg-slate-900/85 z-40 flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
-            <div className="w-10 h-10 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs font-bold text-slate-700 dark:text-slate-350">กำลังบันทึกและส่งคำขอขอยืมครุภัณฑ์...</p>
-          </div>
-        )}
-
+      <div className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-850 rounded-3xl p-6 shadow-sm">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          
           {/* STEP 1: SELECT ASSET */}
           {step === 1 && (
             <div className="space-y-5">
               <div className="space-y-1">
                 <h2 className="text-base font-bold text-slate-850 dark:text-white flex items-center gap-2">
                   <Box className="text-sky-500" size={18} />
-                  <span>ขั้นตอนที่ 1: เลือกครุภัณฑ์/อุปกรณ์</span>
+                  <span>{language === 'th' ? 'ขั้นตอนที่ 1: เลือกสินทรัพย์' : 'Step 1: Select Asset'}</span>
                 </h2>
                 <p className="text-slate-400 dark:text-slate-500 text-[11px] leading-relaxed">
-                  กรุณาเลือกอุปกรณ์หรือครุภัณฑ์ที่ต้องการยื่นขอยืม โดยระบบจะแสดงเฉพาะครุภัณฑ์ที่มีสถานะว่างพร้อมใช้งานในขณะนี้
+                  {language === 'th' ? 'เลือกสินทรัพย์จากรายการที่มี หรือสแกน QR Code ของสินทรัพย์เพื่อทำรายการ' : 'Select an asset from the available list, or scan the asset\'s QR Code to proceed.'}
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-slate-700 dark:text-slate-300 text-xs font-bold">เลือกครุภัณฑ์ที่ต้องการ *</label>
-                {loading ? (
-                  <div className="h-12 w-full bg-slate-50 dark:bg-slate-950 border border-slate-150/60 dark:border-slate-850 rounded-2xl animate-pulse flex items-center justify-center text-[10px] text-slate-400">
-                    กำลังดึงรายการคลังอุปกรณ์...
-                  </div>
-                ) : assets.length === 0 ? (
-                  <div className="p-5 bg-amber-50 dark:bg-amber-955/20 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-400 rounded-2xl text-xs font-semibold leading-relaxed">
-                    ขออภัย ในระบบไม่มีครุภัณฑ์/อุปกรณ์ว่างสำหรับการยื่นขอยืมในขณะนี้
-                  </div>
-                ) : (
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex-1 relative">
-                      <select
-                        {...register('assetId')}
-                        className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-sky-500 dark:focus:border-sky-500 cursor-pointer font-medium"
-                      >
-                        <option value="">-- ค้นหาและเลือกครุภัณฑ์ --</option>
-                        {assets.map((asset) => (
-                          <option key={asset.id} value={asset.id}>
-                            [{asset.assetCode}] {asset.name} - {asset.category}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setIsScannerOpen(true)}
-                      className="px-5 py-3 bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-850 hover:border-slate-300 rounded-2xl flex items-center justify-center gap-1.5 transition-all duration-200 cursor-pointer text-xs font-bold font-sans shrink-0 shadow-sm"
-                    >
-                      <QrCode size={14} className="text-sky-500" />
-                      <span>สแกนคิวอาร์</span>
-                    </button>
-                  </div>
-                )}
+              <div className="space-y-3">
+                <div className="flex gap-2">
+                  <select
+                    {...register('assetId')}
+                    className="flex-1 bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-2xl px-4 py-3 text-xs text-slate-700 dark:text-slate-355 focus:outline-none focus:border-sky-500"
+                  >
+                    <option value="">{language === 'th' ? '-- เลือกรหัสสินทรัพย์ --' : '-- Select Asset --'}</option>
+                    {assets.map((asset) => (
+                      <option key={asset.id} value={asset.id}>
+                        [{asset.assetCode}] {asset.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setIsScannerOpen(true)}
+                    className="px-4 py-3 bg-indigo-50 text-indigo-600 dark:bg-indigo-950/20 dark:text-indigo-400 rounded-2xl hover:bg-indigo-100 dark:hover:bg-indigo-950/40 transition-colors"
+                  >
+                    <QrCode size={18} />
+                  </button>
+                </div>
                 {errors.assetId && (
-                  <p className="text-red-500 text-[10px] mt-1.5 font-medium">{errors.assetId.message}</p>
+                  <p className="text-red-500 text-[10px] mt-1.5 font-medium">
+                    {language === 'th' ? errors.assetId.message : 'Please select the asset you want to borrow'}
+                  </p>
                 )}
               </div>
 
               {selectedAsset && (
-                <div className="p-5 bg-gradient-to-br from-slate-50 to-indigo-50/15 dark:from-slate-955 dark:to-indigo-950/10 border border-slate-150/60 dark:border-slate-850 rounded-2xl flex items-start gap-4 shadow-inner">
-                  <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-955 text-sky-500 flex items-center justify-center shrink-0 border border-sky-100 dark:border-sky-900/60 shadow-sm">
-                    <Box size={22} />
-                  </div>
-                  <div className="space-y-1">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 rounded-md font-bold uppercase tracking-wider">
-                      <span className="w-1 h-1 rounded-full bg-emerald-500"></span>
-                      พร้อมใช้งาน (Available)
-                    </span>
-                    <h4 className="text-sm font-bold text-slate-800 dark:text-white mt-1.5 leading-snug">{selectedAsset.name}</h4>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
-                      รหัสครุภัณฑ์: <span className="font-mono">{selectedAsset.assetCode}</span> | หมวดหมู่: {selectedAsset.category}
+                <div className="p-4 bg-sky-50 dark:bg-sky-955/30 rounded-2xl border border-sky-100 dark:border-sky-900/50 flex gap-3">
+                  <Info className="text-sky-500 shrink-0 mt-0.5" size={16} />
+                  <div>
+                    <h4 className="text-[11px] font-bold text-sky-800 dark:text-sky-300">{language === 'th' ? 'สินทรัพย์ที่เลือก' : 'Selected Asset'}</h4>
+                    <p className="text-[11px] text-sky-700 dark:text-sky-400 mt-1">
+                      {selectedAsset.name} <br />
+                      {language === 'th' ? 'รหัสครุภัณฑ์:' : 'Asset Code:'} <span className="font-mono">{selectedAsset.assetCode}</span> | {language === 'th' ? 'หมวดหมู่:' : 'Category:'} {selectedAsset.category}
                     </p>
                   </div>
                 </div>
@@ -377,7 +313,7 @@ export default function NewBorrowPage() {
                   disabled={!selectedAssetId}
                   className="px-5 py-3 bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white rounded-2xl font-bold text-xs shadow-md shadow-sky-500/10 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-95 duration-200"
                 >
-                  <span>ขั้นตอนถัดไป</span>
+                  <span>{language === 'th' ? 'ขั้นตอนถัดไป' : 'Next Step'}</span>
                   <ArrowRight size={14} />
                 </button>
               </div>
@@ -390,16 +326,16 @@ export default function NewBorrowPage() {
               <div className="space-y-1">
                 <h2 className="text-base font-bold text-slate-850 dark:text-white flex items-center gap-2">
                   <Calendar className="text-sky-500" size={18} />
-                  <span>ขั้นตอนที่ 2: ระบุระยะเวลาและวัตถุประสงค์</span>
+                  <span>{language === 'th' ? 'ขั้นตอนที่ 2: ระบุระยะเวลาและวัตถุประสงค์' : 'Step 2: Duration & Purpose'}</span>
                 </h2>
                 <p className="text-slate-400 dark:text-slate-500 text-[11px] leading-relaxed">
-                  ระบุวันที่เริ่มต้นขอยืม วันส่งคืนคาดการณ์ และระบุข้อมูลเหตุผลความจำเป็นในการยืมเพื่อส่งให้ผู้อนุมัติพิจารณา
+                  {language === 'th' ? 'ระบุวันที่เริ่มต้นขอยืม วันส่งคืนคาดการณ์ และระบุข้อมูลเหตุผลความจำเป็นในการยืมเพื่อส่งให้ผู้อนุมัติพิจารณา' : 'Specify the borrow start date, expected return date, and the purpose of borrowing for approval.'}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label className="block text-slate-700 dark:text-slate-300 text-xs font-bold">วันที่เริ่มต้นยืมใช้งาน *</label>
+                  <label className="block text-slate-700 dark:text-slate-300 text-xs font-bold">{language === 'th' ? 'วันที่เริ่มต้นยืมใช้งาน *' : 'Borrow Start Date *'}</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                       <Calendar size={15} />
@@ -412,12 +348,14 @@ export default function NewBorrowPage() {
                     />
                   </div>
                   {errors.borrowDate && (
-                    <p className="text-red-500 text-[10px] mt-1.5 font-medium">{errors.borrowDate.message}</p>
+                    <p className="text-red-500 text-[10px] mt-1.5 font-medium">
+                      {language === 'th' ? errors.borrowDate.message : 'Please select borrow date'}
+                    </p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-slate-700 dark:text-slate-300 text-xs font-bold">วันที่คาดว่าจะส่งคืน *</label>
+                  <label className="block text-slate-700 dark:text-slate-300 text-xs font-bold">{language === 'th' ? 'วันที่คาดว่าจะส่งคืน *' : 'Expected Return Date *'}</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                       <Calendar size={15} />
@@ -430,13 +368,19 @@ export default function NewBorrowPage() {
                     />
                   </div>
                   {errors.expectedReturnDate && (
-                    <p className="text-red-500 text-[10px] mt-1.5 font-medium">{errors.expectedReturnDate.message}</p>
+                    <p className="text-red-500 text-[10px] mt-1.5 font-medium">
+                      {language === 'th' 
+                        ? errors.expectedReturnDate.message 
+                        : errors.expectedReturnDate.message?.includes('หลังจาก') 
+                          ? 'Expected return date must be on or after borrow date' 
+                          : 'Please select expected return date'}
+                    </p>
                   )}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-slate-700 dark:text-slate-300 text-xs font-bold">วัตถุประสงค์ในการขอยืมใช้งาน *</label>
+                <label className="block text-slate-700 dark:text-slate-300 text-xs font-bold">{language === 'th' ? 'วัตถุประสงค์ในการขอยืมใช้งาน *' : 'Borrow Purpose *'}</label>
                 <div className="relative">
                   <div className="absolute top-3 left-4 text-slate-400">
                     <FileText size={15} />
@@ -444,12 +388,14 @@ export default function NewBorrowPage() {
                   <textarea
                     {...register('purpose')}
                     rows={4}
-                    placeholder="อธิบายวัตถุประสงค์และแผนการใช้งานอุปกรณ์นี้ เช่น นำไปใช้ในวิชาเช็คสิทธิ์เครื่องเคียง เที่ยวบินฝึกอบรมรหัสบิน..."
+                    placeholder={language === 'th' ? 'อธิบายวัตถุประสงค์และแผนการใช้งานอุปกรณ์นี้...' : 'Explain the purpose and plan for using this device...'}
                     className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-2xl pl-11 pr-4 py-3 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-sky-500 placeholder-slate-400"
                   />
                 </div>
                 {errors.purpose && (
-                  <p className="text-red-500 text-[10px] mt-1.5 font-medium">{errors.purpose.message}</p>
+                  <p className="text-red-500 text-[10px] mt-1.5 font-medium">
+                    {language === 'th' ? errors.purpose.message : 'Please specify borrow purpose'}
+                  </p>
                 )}
               </div>
 
@@ -459,14 +405,14 @@ export default function NewBorrowPage() {
                   onClick={prevStep}
                   className="px-5 py-3 bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-650 dark:text-slate-300 rounded-2xl font-bold text-xs transition-colors cursor-pointer"
                 >
-                  ย้อนกลับ
+                  {language === 'th' ? 'ย้อนกลับ' : 'Back'}
                 </button>
                 <button
                   type="button"
                   onClick={nextStep}
                   className="px-5 py-3 bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white rounded-2xl font-bold text-xs shadow-md shadow-sky-500/10 transition-all cursor-pointer flex items-center gap-1.5 hover:scale-[1.02] active:scale-95 duration-200"
                 >
-                  <span>ขั้นตอนถัดไป</span>
+                  <span>{language === 'th' ? 'ขั้นตอนถัดไป' : 'Next Step'}</span>
                   <ArrowRight size={14} />
                 </button>
               </div>
@@ -479,10 +425,10 @@ export default function NewBorrowPage() {
               <div className="space-y-1">
                 <h2 className="text-base font-bold text-slate-850 dark:text-white flex items-center gap-2">
                   <Sparkles className="text-sky-500" size={18} />
-                  <span>ขั้นตอนที่ 3: ลงนามดิจิทัลและส่งคำขอ</span>
+                  <span>{language === 'th' ? 'ขั้นตอนที่ 3: ลงนามดิจิทัลและส่งคำขอ' : 'Step 3: Digital Signature & Submit'}</span>
                 </h2>
                 <p className="text-slate-400 dark:text-slate-500 text-[11px] leading-relaxed">
-                  ตรวจสอบรายละเอียดการขอยืมในสรุปรายการ จากนั้นลงชื่อผู้ขอยืมในช่องลงนามเพื่อบันทึกส่งข้อมูลอนุมัติ
+                  {language === 'th' ? 'ตรวจสอบรายละเอียดการขอยืมในสรุปรายการ จากนั้นลงชื่อผู้ขอยืมในช่องลงนามเพื่อบันทึกส่งข้อมูลอนุมัติ' : 'Review borrowing details in the summary below, then sign in the signature pad to submit.'}
                 </p>
               </div>
 
@@ -490,28 +436,28 @@ export default function NewBorrowPage() {
               <div className="p-5 border border-slate-150/60 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-955/30 rounded-2xl space-y-4">
                 <h3 className="text-xs font-bold text-slate-700 dark:text-slate-350 border-b dark:border-slate-800 pb-2 flex items-center gap-1.5">
                   <CheckCircle size={14} className="text-emerald-500" />
-                  <span>สรุปรายการคำขอยืมครุภัณฑ์</span>
+                  <span>{language === 'th' ? 'สรุปรายการคำขอยืมครุภัณฑ์' : 'Borrow Request Summary'}</span>
                 </h3>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">อุปกรณ์ที่ยืม:</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">{language === 'th' ? 'อุปกรณ์ที่ยืม:' : 'Equipment to Borrow:'}</span>
                     <span className="font-bold text-slate-850 dark:text-white text-xs mt-1 block">
                       [{selectedAsset?.assetCode}] {selectedAsset?.name}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">หมวดหมู่:</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">{language === 'th' ? 'หมวดหมู่:' : 'Category:'}</span>
                     <span className="font-bold text-slate-850 dark:text-white text-xs mt-1 block">{selectedAsset?.category}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">กำหนดการใช้งาน:</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">{language === 'th' ? 'กำหนดการใช้งาน:' : 'Usage Schedule:'}</span>
                     <span className="font-bold text-slate-850 dark:text-white text-xs mt-1 block leading-relaxed">
-                      {new Date(borrowDateVal).toLocaleDateString('th-TH')} - {new Date(expectedReturnDateVal).toLocaleDateString('th-TH')}
+                      {new Date(borrowDateVal).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US')} - {new Date(expectedReturnDateVal).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US')}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">วัตถุประสงค์:</span>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">{language === 'th' ? 'วัตถุประสงค์:' : 'Purpose:'}</span>
                     <span className="font-bold text-slate-800 dark:text-slate-300 text-xs mt-1 block leading-relaxed whitespace-pre-line">
                       {purposeVal}
                     </span>
@@ -523,7 +469,7 @@ export default function NewBorrowPage() {
               <div className="space-y-2">
                 <label className="block text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5">
                   <PenTool size={14} className="text-sky-500" />
-                  <span>วาดลายเซ็นของคุณด้านล่างนี้ *</span>
+                  <span>{language === 'th' ? 'วาดลายเซ็นของคุณด้านล่างนี้ *' : 'Draw your signature below *'}</span>
                 </label>
                 
                 <div className="border border-slate-200 dark:border-slate-800 bg-white rounded-2xl overflow-hidden shadow-inner relative">
@@ -543,9 +489,9 @@ export default function NewBorrowPage() {
                   
                   {/* Overlay text */}
                   {!isCanvasSigned && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-slate-300 dark:text-slate-700 text-[10px] font-bold">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-slate-300 dark:text-slate-750 text-[10px] font-bold">
                       <PenTool size={20} className="mb-1 opacity-40 text-slate-400" />
-                      <span>วาดลายเซ็นตรงนี้ (เมาส์หรือระบบสัมผัส)</span>
+                      <span>{language === 'th' ? 'วาดลายเซ็นตรงนี้ (เมาส์หรือระบบสัมผัส)' : 'Draw signature here (mouse or touch)'}</span>
                     </div>
                   )}
 
@@ -553,10 +499,10 @@ export default function NewBorrowPage() {
                     type="button"
                     onClick={clearCanvas}
                     className="absolute bottom-3 right-3 p-2 bg-slate-50 dark:bg-slate-800 hover:bg-rose-50 hover:text-red-500 text-slate-500 dark:text-slate-400 rounded-xl transition-all active:scale-95 cursor-pointer flex items-center gap-1 text-[10px] font-bold shadow-sm"
-                    title="ล้างลายเซ็น"
+                    title={language === 'th' ? 'ล้างลายเซ็น' : 'Clear Signature'}
                   >
                     <Trash2 size={12} />
-                    <span>ล้างลายเซ็น</span>
+                    <span>{language === 'th' ? 'ล้างลายเซ็น' : 'Clear Signature'}</span>
                   </button>
                 </div>
               </div>
@@ -567,14 +513,14 @@ export default function NewBorrowPage() {
                   onClick={prevStep}
                   className="px-5 py-3 bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-650 dark:text-slate-300 rounded-2xl font-bold text-xs transition-colors cursor-pointer"
                 >
-                  ย้อนกลับ
+                  {language === 'th' ? 'ย้อนกลับ' : 'Back'}
                 </button>
                 <button
                   type="submit"
                   disabled={submitting || !isCanvasSigned}
                   className="px-6 py-3 bg-gradient-to-r from-sky-400 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white rounded-2xl font-bold text-xs shadow-lg shadow-sky-500/20 transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.03] active:scale-95 duration-200"
                 >
-                  <span>ยืนยันและส่งคำขอยืม</span>
+                  <span>{language === 'th' ? 'ยืนยันและส่งคำขอยืม' : 'Confirm & Submit Borrow'}</span>
                 </button>
               </div>
             </div>

@@ -4,6 +4,8 @@ import React, { useEffect, useRef } from 'react';
 import { X, Camera, AlertCircle } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
+import { useLanguage } from '../providers/LanguageProvider';
+
 interface QRScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -15,8 +17,9 @@ export default function QRScannerModal({
   isOpen,
   onClose,
   onScan,
-  title = 'สแกน QR Code สินทรัพย์'
+  title
 }: QRScannerModalProps) {
+  const { language } = useLanguage();
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const qrRegionId = 'html5qr-code-region';
 
@@ -84,7 +87,7 @@ export default function QRScannerModal({
         <div className="p-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2 text-sky-400">
             <Camera size={18} />
-            <h3 className="text-sm font-bold tracking-wide">{title}</h3>
+            <h3 className="text-sm font-bold tracking-wide">{title || (language === 'th' ? 'สแกน QR Code สินทรัพย์' : 'Scan Asset QR Code')}</h3>
           </div>
           <button
             onClick={onClose}
@@ -119,11 +122,11 @@ export default function QRScannerModal({
 
           <div className="text-center space-y-1">
             <p className="text-[11px] font-medium text-slate-400">
-              กรุณาจัดให้รหัส QR Code อยู่กึ่งกลางของกรอบกล้อง
+              {language === 'th' ? 'กรุณาจัดให้รหัส QR Code อยู่กึ่งกลางของกรอบกล้อง' : 'Please align the QR Code with the center of the camera frame.'}
             </p>
             <p className="text-[10px] text-slate-500 flex items-center justify-center gap-1">
               <AlertCircle size={12} />
-              <span>ต้องการสิทธิ์เข้าใช้งานกล้องถ่ายรูป (Webcam)</span>
+              <span>{language === 'th' ? 'ต้องการสิทธิ์เข้าใช้งานกล้องถ่ายรูป (Webcam)' : 'Webcam access permission required'}</span>
             </p>
           </div>
         </div>
@@ -134,7 +137,7 @@ export default function QRScannerModal({
             onClick={onClose}
             className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
           >
-            ยกเลิก
+            {language === 'th' ? 'ยกเลิก' : 'Cancel'}
           </button>
         </div>
       </div>

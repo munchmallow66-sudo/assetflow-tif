@@ -4,7 +4,9 @@ import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
 import { rejectRequestSchema, formatZodError } from '@/lib/validations';
 import { createAuditLog } from '@/lib/audit-log';
+import { sendBorrowStatusNotification } from '@/lib/email';
 import { BorrowStatus, Role } from '@prisma/client';
+
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -46,7 +48,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     });
 
     await createAuditLog(user.sub, 'REJECT_BORROW_REQUEST', 'BorrowRequest', id, borrowRequest, updatedRequest);
+    sendBorrowStatusNotification(updatedRequest, 'REJECTED').catch((err) => console.error('Send reject borrow email error:', err));
     return NextResponse.json(updatedRequest);
+
   } catch (error: any) {
     console.error('Reject borrow request error:', error);
     return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาด' }, { status: 500 });

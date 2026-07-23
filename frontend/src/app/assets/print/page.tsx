@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { getQrCodeImageUrl } from '@/lib/url';
+import { useLanguage } from '@/components/providers/LanguageProvider';
 import { useAuth } from '@/components/providers/AuthProvider';
 import api from '@/lib/api';
 import { ArrowLeft, Printer, CheckSquare, Square, QrCode } from 'lucide-react';
@@ -24,6 +26,7 @@ interface Asset {
 
 export default function PrintQrPage() {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -78,10 +81,16 @@ export default function PrintQrPage() {
             className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 text-xs font-semibold mb-2"
           >
             <ArrowLeft size={16} />
-            <span>ย้อนกลับไปหน้าสินทรัพย์</span>
+            <span>{language === 'th' ? 'ย้อนกลับไปหน้าสินทรัพย์' : 'Back to Assets'}</span>
           </Link>
-          <h1 className="text-2xl font-bold text-slate-800">พิมพ์รหัส QR Code อุปกรณ์</h1>
-          <p className="text-slate-500 text-xs mt-1">เลือกรายการสินทรัพย์และอุปกรณ์ที่ต้องการพิมพ์รหัส QR Code เพื่อนำไปติดใช้งานจริง</p>
+          <h1 className="text-2xl font-bold text-slate-800">
+            {language === 'th' ? 'พิมพ์รหัส QR Code อุปกรณ์' : 'Print Equipment QR Codes'}
+          </h1>
+          <p className="text-slate-500 text-xs mt-1">
+            {language === 'th'
+              ? 'เลือกรายการสินทรัพย์และอุปกรณ์ที่ต้องการพิมพ์รหัส QR Code เพื่อนำไปติดใช้งานจริง'
+              : 'Select assets and equipment to print QR codes for physical tagging'}
+          </p>
         </div>
 
         <div className="flex gap-3">
@@ -90,7 +99,11 @@ export default function PrintQrPage() {
             className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 cursor-pointer"
           >
             {selectedIds.length === assets.length ? <CheckSquare size={16} className="text-sky-500" /> : <Square size={16} />}
-            <span>เลือกทั้งหมด ({selectedIds.length}/{assets.length})</span>
+            <span>
+              {language === 'th'
+                ? `เลือกทั้งหมด (${selectedIds.length}/${assets.length})`
+                : `Select All (${selectedIds.length}/${assets.length})`}
+            </span>
           </button>
           <button
             onClick={handlePrint}
@@ -98,7 +111,11 @@ export default function PrintQrPage() {
             className="px-4 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 shadow-md shadow-sky-500/10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <Printer size={16} />
-            <span>สั่งพิมพ์ QR Code ({selectedIds.length})</span>
+            <span>
+              {language === 'th'
+                ? `สั่งพิมพ์ QR Code (${selectedIds.length})`
+                : `Print QR Code (${selectedIds.length})`}
+            </span>
           </button>
         </div>
       </div>
@@ -110,13 +127,15 @@ export default function PrintQrPage() {
       ) : assets.length === 0 ? (
         <div className="bg-white border border-slate-100 rounded-xl p-12 text-center text-slate-400 print:hidden">
           <QrCode size={40} className="mx-auto text-slate-300 mb-3" />
-          <p className="text-sm">ไม่มีข้อมูลสินทรัพย์ในระบบ</p>
+          <p className="text-sm">{language === 'th' ? 'ไม่มีข้อมูลสินทรัพย์ในระบบ' : 'No assets in the system'}</p>
         </div>
       ) : (
         <>
           {/* Asset checklist selector - Hidden on print */}
           <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm print:hidden">
-            <h3 className="text-xs font-bold text-slate-700 mb-4">คลิกเพื่อเลือก/ยกเลิกรายการสินทรัพย์ที่จะพิมพ์</h3>
+            <h3 className="text-xs font-bold text-slate-700 mb-4">
+              {language === 'th' ? 'คลิกเพื่อเลือก/ยกเลิกรายการสินทรัพย์ที่จะพิมพ์' : 'Click to select/deselect assets to print'}
+            </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-2">
               {assets.map((asset) => {
                 const isSelected = selectedIds.includes(asset.id);
@@ -145,15 +164,15 @@ export default function PrintQrPage() {
                         <span className="text-[10px] font-mono text-sky-600 font-bold">{asset.assetCode}</span>
                         {asset.status === 'BORROWED' && asset.currentHolder ? (
                           <span className="text-[9px] bg-rose-50 text-rose-600 border border-rose-100 rounded px-1 font-semibold truncate max-w-[120px]" title={`ยืมโดย: ${asset.currentHolder.firstName} ${asset.currentHolder.lastName}`}>
-                            ผู้ยืม: {asset.currentHolder.firstName}
+                            {language === 'th' ? `ผู้ยืม: ${asset.currentHolder.firstName}` : `Borrower: ${asset.currentHolder.firstName}`}
                           </span>
                         ) : asset.status === 'AVAILABLE' ? (
                           <span className="text-[9px] bg-emerald-50 text-emerald-600 border border-emerald-100 rounded px-1 font-semibold">
-                            พร้อมใช้งาน
+                            {language === 'th' ? 'พร้อมใช้งาน' : 'Available'}
                           </span>
                         ) : asset.status === 'MAINTENANCE' ? (
                           <span className="text-[9px] bg-amber-50 text-amber-600 border border-amber-100 rounded px-1 font-semibold">
-                            ซ่อมบำรุง
+                            {language === 'th' ? 'ซ่อมบำรุง' : 'Maintenance'}
                           </span>
                         ) : null}
                       </div>
@@ -166,11 +185,17 @@ export default function PrintQrPage() {
 
           {/* Printable Layout Sheet */}
           <div className="bg-slate-50 border border-slate-150 p-6 rounded-2xl print:bg-white print:p-0 print:border-none">
-            <h3 className="text-xs font-bold text-slate-500 mb-4 print:hidden">ตัวอย่างใบพิมพ์สติกเกอร์ (Preview)</h3>
+            <h3 className="text-xs font-bold text-slate-500 mb-4 print:hidden">
+              {language === 'th' ? 'ตัวอย่างใบพิมพ์สติกเกอร์ (Preview)' : 'Sticker Print Preview'}
+            </h3>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 print:grid-cols-3 print:gap-6 print:p-0 bg-white p-6 rounded-xl border border-slate-200/60 print:border-none print:shadow-none shadow-inner">
               {selectedAssets.length === 0 ? (
-                <div className="col-span-full text-center py-10 text-xs text-slate-400">กรุณาเลือกสินทรัพย์อย่างน้อย 1 รายการเพื่อแสดงตัวอย่างการพิมพ์</div>
+                <div className="col-span-full text-center py-10 text-xs text-slate-400">
+                  {language === 'th'
+                    ? 'กรุณาเลือกสินทรัพย์อย่างน้อย 1 รายการเพื่อแสดงตัวอย่างการพิมพ์'
+                    : 'Please select at least 1 asset to preview the print template'}
+                </div>
               ) : (
                 selectedAssets.map((asset) => (
                   <div
@@ -185,7 +210,7 @@ export default function PrintQrPage() {
                     {/* QR Code image using real generation API */}
                     <div className="w-20 h-20 my-2 bg-white flex items-center justify-center">
                       <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(asset.qrCode)}`}
+                        src={getQrCodeImageUrl(asset.qrCode || asset.assetCode, '150x150')}
                         alt={`QR-${asset.assetCode}`}
                         className="w-full h-full object-contain"
                       />
@@ -199,15 +224,7 @@ export default function PrintQrPage() {
                       <p className="text-[8px] text-slate-600 font-bold truncate leading-tight">
                         {asset.name}
                       </p>
-                      {asset.status === 'BORROWED' && asset.currentHolder ? (
-                        <p className="text-[7.5px] text-rose-600 font-extrabold truncate bg-rose-50 border border-rose-200 rounded py-0.5 mt-0.5 px-0.5 leading-none">
-                          ผู้ยืม: {asset.currentHolder.firstName}
-                        </p>
-                      ) : (
-                        <p className="text-[7.5px] text-slate-400 font-semibold truncate border border-slate-100 rounded py-0.5 mt-0.5 px-0.5 leading-none bg-slate-50/50">
-                          {asset.status === 'AVAILABLE' ? 'พร้อมใช้งาน' : asset.status === 'MAINTENANCE' ? 'ซ่อมบำรุง' : 'ไม่พร้อมใช้'}
-                        </p>
-                      )}
+
                     </div>
                   </div>
                 ))

@@ -4,7 +4,9 @@ import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
 import { createBorrowRequestSchema, formatZodError } from '@/lib/validations';
 import { createAuditLog } from '@/lib/audit-log';
+import { sendBorrowRequestNotification } from '@/lib/email';
 import { BorrowStatus, AssetStatus, Role } from '@prisma/client';
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -101,7 +103,9 @@ export async function POST(request: NextRequest) {
     });
 
     await createAuditLog(user.sub, 'CREATE_BORROW_REQUEST', 'BorrowRequest', borrowRequest.id, null, borrowRequest);
+    sendBorrowRequestNotification(borrowRequest).catch((err) => console.error('Send borrow request email error:', err));
     return NextResponse.json(borrowRequest, { status: 201 });
+
   } catch (error: any) {
     console.error('Create borrow request error:', error);
     return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาด' }, { status: 500 });

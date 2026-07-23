@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { useLanguage } from '@/components/providers/LanguageProvider';
 import api from '@/lib/api';
+
 import { 
   ClipboardList, 
   PlusCircle, 
@@ -53,8 +56,10 @@ interface BorrowRequest {
   } | null;
 }
 
-export default function BorrowPage() {
+function BorrowContent() {
   const { user } = useAuth();
+  const { t, language } = useLanguage();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const [requests, setRequests] = useState<BorrowRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +68,20 @@ export default function BorrowPage() {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    const filterParam = searchParams.get('filter');
+    if (tabParam === 'pending' || tabParam === 'history') {
+      setActiveTab(tabParam);
+    }
+    if (filterParam) {
+      setStatusFilter(filterParam);
+      if (filterParam === 'OVERDUE' || filterParam === 'RETURNED' || filterParam === 'BORROWED') {
+        setActiveTab('history');
+      }
+    }
+  }, [searchParams]);
 
   // Return date edit states
   const [customReturnDate, setCustomReturnDate] = useState<string>('');
@@ -98,41 +117,41 @@ export default function BorrowPage() {
   }, [selectedReturn]);
 
   const handleApprove = async (id: string, requestNo: string) => {
-    if (!confirm(`ยืนยันการอนุมัติการยืมรายการรหัส: ${requestNo}?`)) return;
+    if (!confirm(t('confirmApproveBorrow', { requestNo }))) return;
     try {
       await api.patch(`/borrow-requests/${id}/approve`);
-      toast.success('อนุมัติเรียบร้อยแล้ว', `อนุมัติรายการยืมรหัส: ${requestNo}`);
+      toast.success(t('approvedSuccess'), `${t('approvedBorrow')}${requestNo}`);
       fetchRequests();
     } catch (err: any) {
-      toast.error('การอนุมัติล้มเหลว', err.response?.data?.message || 'ไม่สามารถอนุมัติรายการนี้ได้');
+      toast.error(t('approveFailed'), err.response?.data?.message || t('cannotApprove'));
     }
   };
 
   const handleReject = async (id: string, requestNo: string) => {
-    const reason = prompt('กรุณาระบุเหตุผลในการปฏิเสธคำขอนี้:');
+    const reason = prompt(t('confirmReject') || t('promptRejectReason'));
     if (reason === null) return;
     if (!reason.trim()) {
-      toast.warning('ต้องระบุเหตุผล', 'จำเป็นต้องระบุเหตุผลในการปฏิเสธ');
+      toast.warning(t('reasonRequired'), t('reasonRequiredDesc'));
       return;
     }
 
     try {
       await api.patch(`/borrow-requests/${id}/reject`, { rejectedReason: reason });
-      toast.success('ปฏิเสธเรียบร้อยแล้ว', `ปฏิเสธรายการยืมรหัส: ${requestNo}`);
+      toast.success(t('rejectedSuccess'), `${t('rejectedRequest')}${requestNo}`);
       fetchRequests();
     } catch (err: any) {
-      toast.error('การดำเนินการล้มเหลว', err.response?.data?.message || 'ไม่สามารถปฏิเสธคำขอนี้ได้');
+      toast.error(t('operationFailed'), err.response?.data?.message || t('cannotReject'));
     }
   };
 
   const handleCancel = async (id: string, requestNo: string) => {
-    if (!confirm(`คุณต้องการยกเลิกคำขอยืมรายการรหัส: ${requestNo}?`)) return;
+    if (!confirm(t('confirmCancel', { requestNo }))) return;
     try {
       await api.patch(`/borrow-requests/${id}/cancel`);
-      toast.success('ยกเลิกเรียบร้อยแล้ว', `ยกเลิกคำขอยืมรหัส: ${requestNo}`);
+      toast.success(t('cancelledSuccess'), `${t('cancelledRequest')}${requestNo}`);
       fetchRequests();
     } catch (err: any) {
-      toast.error('การยกเลิกล้มเหลว', err.response?.data?.message || 'ไม่สามารถยกเลิกคำขอนี้ได้');
+      toast.error(language === 'th' ? 'การยกเลิกล้มเหลว' : 'Cancellation failed', err.response?.data?.message || t('cannotCancel'));
     }
   };
 
@@ -140,16 +159,16 @@ export default function BorrowPage() {
     if (!selectedReturn) return;
     const reqNo = selectedReturn.requestNo;
     const id = selectedReturn.id;
-    if (!confirm(`ยืนยันการอนุมัติการรับคืนรายการรหัส: ${reqNo}?`)) return;
+    if (!confirm(t('confirmApproveReturn', { requestNo: reqNo }))) return;
     try {
       await api.patch(`/borrow-requests/${id}/approve-return`, {
         returnDate: new Date(customReturnDate).toISOString(),
       });
-      toast.success('อนุมัติการส่งคืนเรียบร้อยแล้ว', `อนุมัติรับคืนรหัส: ${reqNo}`);
+      toast.success(t('approvedReturn'), `${t('approvedReturnCode')}${reqNo}`);
       setSelectedReturn(null);
       fetchRequests();
     } catch (err: any) {
-      toast.error('การอนุมัติล้มเหลว', err.response?.data?.message || 'ไม่สามารถอนุมัติการส่งคืนนี้ได้');
+      toast.error(t('approveFailed'), err.response?.data?.message || t('cannotApproveReturn'));
     }
   };
 
@@ -159,7 +178,7 @@ export default function BorrowPage() {
       const res = await api.patch(`/borrow-requests/${selectedReturn.id}`, {
         returnDate: new Date(customReturnDate).toISOString(),
       });
-      toast.success('แก้ไขวันเวลาเรียบร้อย', 'บันทึกวันเวลาที่ส่งคืนใหม่แล้ว');
+      toast.success(t('editDateTimeSuccess'), t('editDateTimeDesc'));
       setIsEditingDate(false);
       
       // Update local state to reflect edit inside modal
@@ -172,19 +191,19 @@ export default function BorrowPage() {
       });
       fetchRequests();
     } catch (err: any) {
-      toast.error('การแก้ไขล้มเหลว', err.response?.data?.message || 'ไม่สามารถแก้ไขวันที่ส่งคืนได้');
+      toast.error(t('editFailed'), err.response?.data?.message || t('cannotEditDate'));
     }
   };
 
   const handleRejectReturn = async (id: string, requestNo: string) => {
-    if (!confirm(`ยืนยันการปฏิเสธการรับคืนรายการรหัส: ${requestNo}?`)) return;
+    if (!confirm(t('confirmRejectReturn', { requestNo }))) return;
     try {
       await api.patch(`/borrow-requests/${id}/reject-return`);
-      toast.success('ปฏิเสธการส่งคืนเรียบร้อย', `ปฏิเสธการรับคืนรหัส: ${requestNo}`);
+      toast.success(t('rejectReturnSuccess'), `${t('rejectReturnCode')}${requestNo}`);
       setSelectedReturn(null);
       fetchRequests();
     } catch (err: any) {
-      toast.error('การดำเนินการล้มเหลว', err.response?.data?.message || 'ไม่สามารถปฏิเสธการรับคืนได้');
+      toast.error(t('operationFailed'), err.response?.data?.message || t('cannotRejectReturn'));
     }
   };
 
@@ -194,66 +213,66 @@ export default function BorrowPage() {
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-full bg-amber-50 dark:bg-amber-955/20 text-amber-600 dark:text-amber-400 border border-amber-250/60 dark:border-amber-900/50">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-            รออนุมัติยืม
+            {t('PENDING')}
           </span>
         );
       case 'RETURN_PENDING':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-full bg-orange-50 dark:bg-orange-955/20 text-orange-600 dark:text-orange-400 border border-orange-250/60 dark:border-orange-900/50">
             <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-ping"></span>
-            รออนุมัติคืน
+            {t('RETURN_PENDING')}
           </span>
         );
       case 'BORROWED':
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-full bg-blue-50 dark:bg-blue-955/20 text-blue-600 dark:text-blue-400 border border-blue-250/60 dark:border-blue-900/50">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-full bg-blue-50 dark:bg-blue-955/20 text-blue-650 dark:text-blue-450 border border-blue-250/60 dark:border-blue-900/50">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-            กำลังยืม
+            {t('BORROWED')}
           </span>
         );
       case 'RETURNED':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-full bg-emerald-50 dark:bg-emerald-955/20 text-emerald-600 dark:text-emerald-400 border border-emerald-250/60 dark:border-emerald-900/50">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-            คืนแล้ว
+            {t('RETURNED')}
           </span>
         );
       case 'REJECTED':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-full bg-rose-50 dark:bg-rose-955/20 text-rose-600 dark:text-rose-400 border border-rose-250/60 dark:border-rose-900/50">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-            ปฏิเสธแล้ว
+            {t('REJECTED')}
           </span>
         );
       case 'OVERDUE':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-full bg-red-50 dark:bg-red-955/30 text-red-500 dark:text-red-400 border border-red-250/60 dark:border-red-900/50 animate-pulse font-sans">
             <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
-            เลยกำหนดคืน
+            {t('OVERDUE')}
           </span>
         );
       case 'CANCELLED':
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-full bg-slate-50 dark:bg-slate-800/30 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
             <span className="w-1.5 h-1.5 rounded-full bg-slate-450"></span>
-            ยกเลิกแล้ว
+            {t('CANCELLED')}
           </span>
         );
       default:
-        return <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-slate-100 text-slate-600">{status}</span>;
+        return <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-slate-100 text-slate-650">{status}</span>;
     }
   };
 
   const getConditionBadge = (cond: string) => {
     switch (cond) {
       case 'NORMAL':
-        return <span className="px-2.5 py-1 text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-250 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900 rounded-lg font-bold">ปกติ (Normal)</span>;
+        return <span className="px-2.5 py-1 text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-250 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900 rounded-lg font-bold">{t('conditionNormal')}</span>;
       case 'INCOMPLETE':
-        return <span className="px-2.5 py-1 text-[10px] bg-amber-50 text-amber-600 border border-amber-250 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900 rounded-lg font-bold">ไม่สมบูรณ์ (Incomplete)</span>;
+        return <span className="px-2.5 py-1 text-[10px] bg-amber-50 text-amber-600 border border-amber-250 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900 rounded-lg font-bold">{t('conditionIncomplete')}</span>;
       case 'DAMAGED':
-        return <span className="px-2.5 py-1 text-[10px] bg-red-50 text-red-650 border border-red-200 dark:bg-red-955/25 dark:text-red-400 dark:border-red-900 rounded-lg font-bold">ชำรุด (Damaged)</span>;
+        return <span className="px-2.5 py-1 text-[10px] bg-red-50 text-red-650 border border-red-200 dark:bg-red-955/25 dark:text-red-400 dark:border-red-900 rounded-lg font-bold">{t('conditionDamaged')}</span>;
       case 'LOST':
-        return <span className="px-2.5 py-1 text-[10px] bg-red-950/20 text-red-500 border border-red-900 rounded-lg font-bold font-sans">สูญหาย (Lost)</span>;
+        return <span className="px-2.5 py-1 text-[10px] bg-red-950/20 text-red-500 border border-red-900 rounded-lg font-bold font-sans">{t('conditionLost')}</span>;
       default:
         return <span className="px-2.5 py-1 text-[10px] bg-slate-100 text-slate-600 border border-slate-200 rounded-lg font-bold">{cond}</span>;
     }
@@ -304,13 +323,13 @@ export default function BorrowPage() {
   });
 
   const filterOptions = [
-    { label: 'ทั้งหมด', value: 'ALL', count: requests.length },
-    { label: 'รออนุมัติยืม', value: 'PENDING', count: requests.filter(r => r.status === 'PENDING').length },
-    { label: 'รออนุมัติคืน', value: 'RETURN_PENDING', count: requests.filter(r => r.status === 'RETURN_PENDING').length },
-    { label: 'กำลังยืม', value: 'BORROWED', count: requests.filter(r => r.status === 'BORROWED').length },
-    { label: 'คืนแล้ว', value: 'RETURNED', count: requests.filter(r => r.status === 'RETURNED').length },
-    { label: 'เลยกำหนด', value: 'OVERDUE', count: requests.filter(r => r.status === 'OVERDUE').length },
-    { label: 'ปฏิเสธ/ยกเลิก', value: 'REJECTED_CANCELLED', count: requests.filter(r => r.status === 'REJECTED' || r.status === 'CANCELLED').length }
+    { label: t('filterAll'), value: 'ALL', count: requests.length },
+    { label: t('filterPending'), value: 'PENDING', count: requests.filter(r => r.status === 'PENDING').length },
+    { label: t('filterReturnPending'), value: 'RETURN_PENDING', count: requests.filter(r => r.status === 'RETURN_PENDING').length },
+    { label: t('filterBorrowed'), value: 'BORROWED', count: requests.filter(r => r.status === 'BORROWED').length },
+    { label: t('filterReturned'), value: 'RETURNED', count: requests.filter(r => r.status === 'RETURNED').length },
+    { label: t('filterOverdue'), value: 'OVERDUE', count: requests.filter(r => r.status === 'OVERDUE').length },
+    { label: t('filterRejectedCancelled'), value: 'REJECTED_CANCELLED', count: requests.filter(r => r.status === 'REJECTED' || r.status === 'CANCELLED').length }
   ];
 
   return (
@@ -320,9 +339,9 @@ export default function BorrowPage() {
         <div className="absolute inset-0 opacity-5 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
         <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-2">
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">รายการยืม-คืนสินทรัพย์</h1>
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">{t('borrowTitle')}</h1>
             <p className="text-slate-400 text-xs md:text-sm max-w-xl font-normal leading-relaxed">
-              ประวัติการทำรายการยื่นขอยืม คืนสภาพ และพิจารณาอนุมัติครุภัณฑ์/อุปกรณ์ของบริษัท
+              {t('borrowDesc')}
             </p>
           </div>
           {(user?.role === 'STAFF' || user?.role === 'ADMIN' || user?.role === 'APPROVER') && (
@@ -331,7 +350,7 @@ export default function BorrowPage() {
               className="flex items-center justify-center gap-2 bg-gradient-to-r from-sky-400 via-sky-500 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white px-6 py-3.5 rounded-2xl font-bold text-xs shadow-lg shadow-sky-500/20 cursor-pointer transition-all hover:scale-[1.03] active:scale-95 duration-200 hover:shadow-indigo-500/30"
             >
               <PlusCircle size={16} />
-              <span>ขอยืมสินทรัพย์ใหม่</span>
+              <span>{t('requestBorrow')}</span>
             </Link>
           )}
         </div>
@@ -343,9 +362,9 @@ export default function BorrowPage() {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group animate-fade-in-up stagger-1">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-slate-100/40 dark:bg-slate-800/10 group-hover:scale-125 transition-transform duration-500 blur-xl"></div>
           <div className="relative space-y-1">
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">คำขอทั้งหมด</p>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('totalRequests')}</p>
             <p className="text-2xl font-extrabold text-slate-800 dark:text-white mt-1">
-              <AnimatedCounter value={statsCounts.total} /> <span className="text-xs font-normal text-slate-400">รายการ</span>
+              <AnimatedCounter value={statsCounts.total} /> <span className="text-xs font-normal text-slate-400">{t('items')}</span>
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-955/50 text-slate-500 flex items-center justify-center shrink-0 border border-slate-100 dark:border-slate-800 relative z-10 shadow-inner">
@@ -357,9 +376,9 @@ export default function BorrowPage() {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group animate-fade-in-up stagger-2">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-amber-500/5 group-hover:scale-125 transition-transform duration-500 blur-xl"></div>
           <div className="relative space-y-1">
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">รอพิจารณา</p>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('pendingReview')}</p>
             <p className="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-1">
-              <AnimatedCounter value={statsCounts.pending} /> <span className="text-xs font-normal text-slate-400">รายการ</span>
+              <AnimatedCounter value={statsCounts.pending} /> <span className="text-xs font-normal text-slate-400">{t('items')}</span>
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-955/20 text-amber-500 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900/30 relative z-10 shadow-inner">
@@ -371,9 +390,9 @@ export default function BorrowPage() {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group animate-fade-in-up stagger-3">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-sky-500/5 group-hover:scale-125 transition-transform duration-500 blur-xl"></div>
           <div className="relative space-y-1">
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">กำลังยืม</p>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('currentlyBorrowed')}</p>
             <p className="text-2xl font-extrabold text-sky-600 dark:text-sky-400 mt-1">
-              <AnimatedCounter value={statsCounts.borrowed} /> <span className="text-xs font-normal text-slate-400">รายการ</span>
+              <AnimatedCounter value={statsCounts.borrowed} /> <span className="text-xs font-normal text-slate-400">{t('items')}</span>
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-955/20 text-sky-500 flex items-center justify-center shrink-0 border border-sky-100 dark:border-sky-900/30 relative z-10 shadow-inner">
@@ -385,9 +404,9 @@ export default function BorrowPage() {
         <div className="bg-white dark:bg-slate-900 p-5 rounded-3xl border border-slate-150/60 dark:border-slate-800 shadow-sm flex items-center justify-between card-hover relative overflow-hidden group animate-fade-in-up stagger-4">
           <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-red-500/5 group-hover:scale-125 transition-transform duration-500 blur-xl"></div>
           <div className="relative space-y-1">
-            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">เลยกำหนดคืน</p>
+            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{t('overdueReturn')}</p>
             <p className="text-2xl font-extrabold text-red-500 dark:text-red-400 mt-1">
-              <AnimatedCounter value={statsCounts.overdue} /> <span className="text-xs font-normal text-slate-400">รายการ</span>
+              <AnimatedCounter value={statsCounts.overdue} /> <span className="text-xs font-normal text-slate-400">{t('items')}</span>
             </p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-red-50 dark:bg-red-955/20 text-red-500 flex items-center justify-center shrink-0 border border-red-100 dark:border-red-900/30 relative z-10 shadow-inner">
@@ -409,7 +428,7 @@ export default function BorrowPage() {
                   : 'border-transparent text-slate-400 hover:text-slate-650 dark:hover:text-slate-300'
               }`}
             >
-              คำขอรอการพิจารณา ({requests.filter(r => r.status === 'PENDING' || r.status === 'RETURN_PENDING').length})
+              {t('pendingTab')} ({requests.filter(r => r.status === 'PENDING' || r.status === 'RETURN_PENDING').length})
             </button>
             <button
               onClick={() => setActiveTab('history')}
@@ -419,7 +438,7 @@ export default function BorrowPage() {
                   : 'border-transparent text-slate-400 hover:text-slate-650 dark:hover:text-slate-300'
               }`}
             >
-              ประวัติการทำรายการทั้งหมด ({requests.filter(r => r.status !== 'PENDING' && r.status !== 'RETURN_PENDING').length})
+              {t('historyTab')} ({requests.filter(r => r.status !== 'PENDING' && r.status !== 'RETURN_PENDING').length})
             </button>
           </div>
         )}
@@ -455,7 +474,7 @@ export default function BorrowPage() {
             <div className="relative w-full md:w-80 shrink-0">
               <input
                 type="text"
-                placeholder="ค้นหาเลขที่คำขอ, ผู้ยืม, หรือครุภัณฑ์..."
+                placeholder={t('searchBorrowPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-4 pr-10 py-3 text-xs text-slate-700 dark:text-slate-350 focus:outline-none focus:border-sky-500 dark:focus:border-sky-500 transition-colors shadow-sm"
@@ -478,9 +497,9 @@ export default function BorrowPage() {
           <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-slate-955/50 border border-slate-100 dark:border-slate-800 text-slate-400 flex items-center justify-center mb-4 shadow-inner">
             <Inbox size={32} className="text-slate-350 dark:text-slate-650" />
           </div>
-          <h3 className="text-sm font-bold text-slate-755 dark:text-slate-300">ไม่พบรายการยืม-คืนตามตัวกรองที่เลือก</h3>
+          <h3 className="text-sm font-bold text-slate-755 dark:text-slate-300">{t('noBorrowFound')}</h3>
           <p className="text-[11px] text-slate-400 mt-1.5 max-w-xs leading-relaxed">
-            ไม่มีรายการยืม-คืนตามที่ระบุในปัจจุบัน ลองพิมพ์ค้นหาด้วยคำอื่น หรือเลือกแสดงผลรายการทั้งหมด
+            {t('noBorrowDesc')}
           </p>
         </div>
       ) : (
@@ -489,13 +508,13 @@ export default function BorrowPage() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-900 border-b border-slate-150 dark:border-slate-850 text-slate-500 dark:text-slate-450 text-[10px] font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4.5">เลขที่คำขอ</th>
-                  <th className="px-6 py-4.5">ผู้ยืม / แผนก</th>
-                  <th className="px-6 py-4.5">สินทรัพย์ / รหัส</th>
-                  <th className="px-6 py-4.5">ระยะเวลาการยืม</th>
-                  <th className="px-6 py-4.5">วัตถุประสงค์</th>
-                  <th className="px-6 py-4.5">สถานะ</th>
-                  <th className="px-6 py-4.5 text-center">จัดการ</th>
+                  <th className="px-6 py-4.5">{t('requestNo')}</th>
+                  <th className="px-6 py-4.5">{t('borrowerDepartment')}</th>
+                  <th className="px-6 py-4.5">{t('assetCode')}</th>
+                  <th className="px-6 py-4.5">{t('borrowPeriod')}</th>
+                  <th className="px-6 py-4.5">{t('purpose')}</th>
+                  <th className="px-6 py-4.5">{t('status')}</th>
+                  <th className="px-6 py-4.5 text-center">{t('manage')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
@@ -505,7 +524,7 @@ export default function BorrowPage() {
                     <tr key={item.id} className="table-row-hover transition-all duration-150">
                       {/* Request No */}
                       <td className="px-6 py-4.5">
-                        <span className="font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/50 px-2.5 py-1.5 rounded-xl text-[10px] shadow-sm">
+                        <span className="font-mono font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-955/40 border border-sky-100 dark:border-sky-900/50 px-2.5 py-1.5 rounded-xl text-[10px] shadow-sm">
                           {item.requestNo}
                         </span>
                       </td>
@@ -541,11 +560,11 @@ export default function BorrowPage() {
                       <td className="px-6 py-4.5 text-slate-600 dark:text-slate-400 space-y-1 shrink-0">
                         <div className="flex items-center gap-1.5 text-[10px] font-medium">
                           <Calendar size={13} className="text-slate-400" />
-                          <span>ยืม: {new Date(item.borrowDate).toLocaleDateString('th-TH')}</span>
+                          <span>{t('borrowDate')} {new Date(item.borrowDate).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US')}</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-[10px] font-bold">
                           <Clock size={13} className="text-slate-400" />
-                          <span>คืน: {new Date(item.expectedReturnDate).toLocaleDateString('th-TH')}</span>
+                          <span>{language === 'th' ? 'คืน:' : 'Return:'} {new Date(item.expectedReturnDate).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US')}</span>
                         </div>
                       </td>
 
@@ -568,14 +587,14 @@ export default function BorrowPage() {
                               <button
                                 onClick={() => handleApprove(item.id, item.requestNo)}
                                 className="p-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 dark:bg-emerald-950/20 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900 rounded-xl transition-all hover:scale-110 active:scale-95 cursor-pointer"
-                                title="อนุมัติการยืม"
+                                title={t('approveBorrowTitle')}
                               >
                                 <Check size={14} />
                               </button>
                               <button
                                 onClick={() => handleReject(item.id, item.requestNo)}
                                 className="p-2 bg-rose-50 hover:bg-rose-100 text-rose-650 dark:bg-rose-955/20 dark:text-rose-400 border border-rose-200 dark:border-rose-900 rounded-xl transition-all hover:scale-110 active:scale-95 cursor-pointer"
-                                title="ปฏิเสธคำขอ"
+                                title={t('rejectRequestTitle')}
                               >
                                 <X size={14} />
                               </button>
@@ -587,10 +606,10 @@ export default function BorrowPage() {
                             <button
                               onClick={() => setSelectedReturn(item)}
                               className="flex items-center gap-1.5 px-3 py-2 bg-sky-50 dark:bg-sky-950/30 hover:bg-sky-100 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-900/50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 cursor-pointer text-[10px] font-bold shadow-sm"
-                              title="ตรวจสอบสภาพส่งคืน"
+                              title={t('checkReturnTitle')}
                             >
                               <Eye size={12} />
-                              <span>ตรวจสภาพคืน</span>
+                              <span>{t('checkReturnCondition')}</span>
                             </button>
                           )}
 
@@ -599,10 +618,10 @@ export default function BorrowPage() {
                             <button
                               onClick={() => setSelectedReturn(item)}
                               className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800/40 hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-650 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-xl transition-all hover:scale-[1.02] active:scale-95 cursor-pointer text-[10px] font-bold"
-                              title="ตรวจสอบการส่งคืน"
+                              title={t('inspectReturnTitle')}
                             >
                               <Eye size={12} />
-                              <span>รายละเอียดคืน</span>
+                              <span>{language === 'th' ? 'รายละเอียดคืน' : 'Return Details'}</span>
                             </button>
                           )}
 
@@ -613,7 +632,7 @@ export default function BorrowPage() {
                               className="flex items-center gap-1.5 px-3 py-2 bg-slate-50 dark:bg-slate-800/20 text-slate-500 hover:text-red-500 hover:bg-rose-50 hover:border-red-200 border border-slate-200 dark:border-slate-800 rounded-xl transition-all active:scale-95 cursor-pointer text-[10px] font-bold"
                             >
                               <Ban size={12} />
-                              <span>ยกเลิกคำขอ</span>
+                              <span>{language === 'th' ? 'ยกเลิกคำขอ' : 'Cancel Request'}</span>
                             </button>
                           )}
 
@@ -622,18 +641,18 @@ export default function BorrowPage() {
                               <Link
                                 href={`/assets/${item.asset.id}`}
                                 className="p-2 border border-slate-200 dark:border-slate-850 hover:border-sky-500 hover:text-sky-600 dark:hover:text-sky-400 text-slate-500 rounded-xl transition-colors cursor-pointer"
-                                title="รายละเอียดสินทรัพย์"
+                                title={language === 'th' ? 'รายละเอียดสินทรัพย์' : 'Asset Details'}
                               >
                                 <Eye size={14} />
                               </Link>
                               {(user?.role === 'ADMIN' || user?.role === 'STAFF') && (item.status === 'BORROWED' || item.status === 'OVERDUE') && (
                                 <Link
                                   href={`/returns/new?requestId=${item.id}`}
-                                  className="inline-flex items-center gap-1 px-3 py-2 bg-emerald-50 dark:bg-emerald-955/20 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-450 border border-emerald-250 dark:border-emerald-900/50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 cursor-pointer font-bold text-[10px]"
-                                  title="คืนของครุภัณฑ์"
+                                  className="inline-flex items-center gap-1 px-3 py-2 bg-emerald-50 dark:bg-emerald-955/20 hover:bg-emerald-100 text-emerald-600 dark:text-emerald-455 border border-emerald-250 dark:border-emerald-900/50 rounded-xl transition-all hover:scale-[1.02] active:scale-95 cursor-pointer font-bold text-[10px]"
+                                  title={language === 'th' ? 'คืนของครุภัณฑ์' : 'Return Asset'}
                                 >
                                   <Undo2 size={12} />
-                                  <span>คืนของ</span>
+                                  <span>{language === 'th' ? 'คืนของ' : 'Return'}</span>
                                 </Link>
                               )}
                             </div>
@@ -657,7 +676,7 @@ export default function BorrowPage() {
             <div className="flex items-center justify-between pb-3 border-b dark:border-slate-800">
               <div className="flex items-center gap-2 text-sky-500">
                 <CalendarRange size={18} />
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white">รายละเอียดการส่งคืนครุภัณฑ์</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white">{language === 'th' ? 'รายละเอียดการส่งคืนครุภัณฑ์' : 'Asset Return Details'}</h3>
               </div>
               <button
                 onClick={() => setSelectedReturn(null)}
@@ -672,31 +691,31 @@ export default function BorrowPage() {
               {/* Asset Info Card */}
               <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-955 p-4 rounded-2xl border border-slate-100 dark:border-slate-850">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">สินทรัพย์</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{language === 'th' ? 'สินทรัพย์' : 'Asset'}</p>
                   <p className="text-xs font-bold text-slate-800 dark:text-white mt-1 leading-snug">{selectedReturn.asset.name}</p>
                   <p className="text-[9px] text-slate-450 font-mono mt-0.5">{selectedReturn.asset.assetCode}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ผู้ส่งคืน</p>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{language === 'th' ? 'ผู้ส่งคืน' : 'Returner'}</p>
                   <p className="text-xs font-bold text-slate-800 dark:text-white mt-1 leading-snug">
                     {selectedReturn.borrower.firstName} {selectedReturn.borrower.lastName}
                   </p>
-                  <p className="text-[9px] text-slate-450 mt-0.5">แผนก: {selectedReturn.borrower.department}</p>
+                  <p className="text-[9px] text-slate-450 mt-0.5">{language === 'th' ? 'แผนก' : 'Dept'}: {selectedReturn.borrower.department}</p>
                 </div>
               </div>
 
               {/* Dates */}
               <div className="grid grid-cols-2 gap-4 text-xs">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold">วันที่ยืมใช้งาน</p>
+                  <p className="text-[10px] text-slate-400 font-bold">{language === 'th' ? 'วันที่ยืมใช้งาน' : 'Borrow Date'}</p>
                   <p className="font-semibold text-slate-700 dark:text-slate-300 mt-1">
-                    {new Date(selectedReturn.borrowDate).toLocaleDateString('th-TH')}
+                    {new Date(selectedReturn.borrowDate).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US')}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold">กำหนดส่งคืนเดิม</p>
+                  <p className="text-[10px] text-slate-400 font-bold">{language === 'th' ? 'กำหนดส่งคืนเดิม' : 'Expected Return Date'}</p>
                   <p className="font-semibold text-slate-700 dark:text-slate-300 mt-1">
-                    {new Date(selectedReturn.expectedReturnDate).toLocaleDateString('th-TH')}
+                    {new Date(selectedReturn.expectedReturnDate).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US')}
                   </p>
                 </div>
               </div>
@@ -704,7 +723,7 @@ export default function BorrowPage() {
               {/* Return Condition reported */}
               <div className="space-y-3 pt-3 border-t dark:border-slate-800">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-750 dark:text-slate-300">สภาพครุภัณฑ์ที่ส่งคืน:</span>
+                  <span className="text-xs font-bold text-slate-750 dark:text-slate-300">{language === 'th' ? 'สภาพครุภัณฑ์ที่ส่งคืน:' : 'Returned Condition:'}</span>
                   <span className="text-xs">
                     {selectedReturn.assetReturn && getConditionBadge(selectedReturn.assetReturn.condition)}
                   </span>
@@ -712,7 +731,7 @@ export default function BorrowPage() {
 
                 {/* Edit Return Date (ADMIN feature) */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">วันที่ส่งคืนจริง</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">{language === 'th' ? 'วันที่ส่งคืนจริง' : 'Actual Return Date'}</label>
                   
                   {selectedReturn.status === 'RETURN_PENDING' ? (
                     // In pending approval state, show datetime-local directly
@@ -735,7 +754,7 @@ export default function BorrowPage() {
                         <button
                           onClick={handleSaveReturnDate}
                           className="p-2 bg-emerald-500 text-white rounded-xl text-xs font-bold hover:bg-emerald-600 active:scale-95 transition-all cursor-pointer"
-                          title="บันทึกวันที่ใหม่"
+                          title={language === 'th' ? 'บันทึกวันที่ใหม่' : 'Save New Date'}
                         >
                           <Check size={14} />
                         </button>
@@ -749,7 +768,7 @@ export default function BorrowPage() {
                     ) : (
                       <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-955 px-3.5 py-2 rounded-xl border border-slate-100 dark:border-slate-850">
                         <span className="font-semibold text-slate-700 dark:text-slate-300">
-                          {new Date(selectedReturn.assetReturn?.returnDate || '').toLocaleString('th-TH')}
+                          {new Date(selectedReturn.assetReturn?.returnDate || '').toLocaleString(language === 'th' ? 'th-TH' : 'en-US')}
                         </span>
                         {user?.role === 'ADMIN' && (
                           <button
@@ -764,7 +783,7 @@ export default function BorrowPage() {
                               setIsEditingDate(true);
                             }}
                             className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-sky-500 transition-colors cursor-pointer"
-                            title="แก้ไขวันที่คืน"
+                            title={language === 'th' ? 'แก้ไขวันที่คืน' : 'Edit Return Date'}
                           >
                             <Edit3 size={12} />
                           </button>
@@ -773,7 +792,7 @@ export default function BorrowPage() {
                     )
                   ) : (
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      {selectedReturn.assetReturn?.returnDate ? new Date(selectedReturn.assetReturn.returnDate).toLocaleString('th-TH') : '-'}
+                      {selectedReturn.assetReturn?.returnDate ? new Date(selectedReturn.assetReturn.returnDate).toLocaleString(language === 'th' ? 'th-TH' : 'en-US') : '-'}
                     </p>
                   )}
                 </div>
@@ -781,7 +800,7 @@ export default function BorrowPage() {
                 {/* Notes */}
                 {selectedReturn.assetReturn?.conditionNote && (
                   <div className="bg-slate-50 dark:bg-slate-955 p-3 rounded-2xl border border-slate-100 dark:border-slate-850 text-xs text-slate-650 dark:text-slate-400 leading-relaxed shadow-inner">
-                    <p className="font-bold text-slate-450 dark:text-slate-500 text-[10px] mb-1">หมายเหตุสภาพที่รายงาน:</p>
+                    <p className="font-bold text-slate-450 dark:text-slate-500 text-[10px] mb-1">{language === 'th' ? 'หมายเหตุสภาพที่รายงาน:' : 'Reported Condition Note:'}</p>
                     {selectedReturn.assetReturn.conditionNote}
                   </div>
                 )}
@@ -789,7 +808,7 @@ export default function BorrowPage() {
                 {/* Evidence Image */}
                 {selectedReturn.assetReturn?.imageUrl ? (
                   <div className="space-y-1.5">
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">หลักฐานรูปภาพถ่าย:</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{language === 'th' ? 'หลักฐานรูปภาพถ่าย:' : 'Evidence Image:'}</p>
                     <div className="h-44 w-full border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-950 flex items-center justify-center relative shadow-sm">
                       <a href={selectedReturn.assetReturn.imageUrl} target="_blank" rel="noreferrer" className="w-full h-full block group">
                         <img
@@ -799,11 +818,11 @@ export default function BorrowPage() {
                         />
                       </a>
                     </div>
-                    <p className="text-[9px] text-slate-400 text-center mt-1">คลิกที่ภาพเพื่อขยายภาพขนาดเต็ม</p>
+                    <p className="text-[9px] text-slate-400 text-center mt-1">{language === 'th' ? 'คลิกที่ภาพเพื่อขยายภาพขนาดเต็ม' : 'Click image to view full size'}</p>
                   </div>
                 ) : (
                   <p className="text-[10px] text-slate-400 italic bg-slate-50/50 dark:bg-slate-955/50 py-2 px-3 rounded-xl border border-dashed dark:border-slate-800 text-center font-medium">
-                    ไม่มีรูปภาพประกอบสภาพส่งคืน
+                    {language === 'th' ? 'ไม่มีรูปภาพประกอบสภาพส่งคืน' : 'No return condition photos'}
                   </p>
                 )}
               </div>
@@ -815,7 +834,7 @@ export default function BorrowPage() {
                 onClick={() => setSelectedReturn(null)}
                 className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
               >
-                ปิดหน้าต่าง
+                {language === 'th' ? 'ปิดหน้าต่าง' : 'Close'}
               </button>
               
               {selectedReturn.status === 'RETURN_PENDING' && user?.role === 'ADMIN' && (
@@ -827,13 +846,13 @@ export default function BorrowPage() {
                     }}
                     className="px-5 py-2.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-650 dark:bg-rose-955/20 dark:text-rose-400 dark:border-rose-900 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
                   >
-                    ปฏิเสธการคืน
+                    {language === 'th' ? 'ปฏิเสธการคืน' : 'Reject Return'}
                   </button>
                   <button
                     onClick={handleApproveReturnWithDate}
                     className="px-5 py-2.5 bg-gradient-to-r from-sky-400 via-sky-500 to-indigo-500 hover:from-sky-500 hover:to-indigo-600 text-white rounded-xl text-xs font-bold shadow-md shadow-sky-500/10 transition-all active:scale-95 cursor-pointer"
                   >
-                    อนุมัติรับคืน
+                    {language === 'th' ? 'อนุมัติรับคืน' : 'Approve Return'}
                   </button>
                 </>
               )}
@@ -844,3 +863,12 @@ export default function BorrowPage() {
     </PageTransition>
   );
 }
+
+export default function BorrowPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-xs text-slate-500">Loading transactions...</div>}>
+      <BorrowContent />
+    </Suspense>
+  );
+}
+

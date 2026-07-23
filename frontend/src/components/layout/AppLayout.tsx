@@ -6,6 +6,7 @@ import Sidebar from './Sidebar';
 import { usePathname, useRouter } from 'next/navigation';
 import QRScannerModal from '@/components/common/QRScannerModal';
 import api from '@/lib/api';
+import { useLanguage } from '../providers/LanguageProvider';
 import { QrCode, X, Box, CheckCircle2, AlertTriangle, ArrowRight, BookOpen, Clock } from 'lucide-react';
 
 interface ScannedAsset {
@@ -19,6 +20,7 @@ interface ScannedAsset {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const { t, language } = useLanguage();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -36,11 +38,21 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setScannedAsset(null);
     setActiveBorrowRequestId(null);
 
+    let cleanCode = scannedText.trim();
+    try {
+      if (cleanCode.includes('code=')) {
+        const urlObj = new URL(cleanCode.startsWith('http') ? cleanCode : `http://dummy.com/${cleanCode}`);
+        cleanCode = urlObj.searchParams.get('code') || cleanCode;
+      }
+    } catch (e) {
+      // Keep cleanCode as is
+    }
+
     try {
       // Fetch all assets to lookup the code
       const assetsRes = await api.get('/assets');
       const matchedAsset = assetsRes.data.find(
-        (a: any) => a.assetCode === scannedText || a.qrCode === scannedText
+        (a: any) => a.assetCode === cleanCode || a.qrCode === cleanCode
       );
 
       if (matchedAsset) {
@@ -61,10 +73,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           }
         }
       } else {
-        setLookupError(`ไม่พบสินทรัพย์หรือครุภัณฑ์รหัส "${scannedText}" ในระบบ`);
+        setLookupError(language === 'th' ? `ไม่พบสินทรัพย์หรือครุภัณฑ์รหัส "${scannedText}" ในระบบ` : `Asset with code "${scannedText}" was not found in the system`);
       }
     } catch (err) {
-      setLookupError('เกิดข้อผิดพลาดในการตรวจสอบรหัสสินทรัพย์');
+      setLookupError(language === 'th' ? 'เกิดข้อผิดพลาดในการตรวจสอบรหัสสินทรัพย์' : 'An error occurred while looking up the asset code');
     } finally {
       setLookupLoading(false);
     }
@@ -72,10 +84,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="flex flex-col items-center gap-3">
           <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-sm font-medium text-slate-500">กำลังโหลดข้อมูลระบบ...</p>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            {language === 'th' ? 'กำลังโหลดข้อมูลระบบ...' : 'Loading system data...'}
+          </p>
         </div>
       </div>
     );
@@ -94,13 +108,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
-
+      
       {/* Mobile QR Scanner FAB (Floating Action Button) */}
       <div className="lg:hidden fixed bottom-6 right-6 z-40">
         <button
           onClick={() => setIsScannerOpen(true)}
           className="w-14 h-14 bg-sky-500 hover:bg-sky-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-sky-500/20 active:scale-95 transition-all cursor-pointer"
-          title="สแกน QR Code ด่วน"
+          title={language === 'th' ? 'สแกน QR Code ด่วน' : 'Quick QR Scan'}
         >
           <QrCode size={26} />
         </button>
@@ -111,7 +125,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         isOpen={isScannerOpen}
         onClose={() => setIsScannerOpen(false)}
         onScan={handleGlobalScan}
-        title="สแกน QR Code ครุภัณฑ์หลักของระบบ"
+        title={language === 'th' ? 'สแกน QR Code ครุภัณฑ์หลักของระบบ' : 'Scan Primary Asset QR Code'}
       />
 
       {/* Lookup Loading Modal */}
@@ -119,7 +133,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-slate-900 border dark:border-slate-800 p-6 rounded-2xl flex flex-col items-center gap-3 shadow-xl max-w-xs w-full">
             <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">กำลังตรวจสอบข้อมูลครุภัณฑ์...</p>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              {language === 'th' ? 'กำลังตรวจสอบข้อมูลครุภัณฑ์...' : 'Verifying asset details...'}
+            </p>
           </div>
         </div>
       )}
@@ -130,7 +146,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-xl max-w-sm w-full relative">
             <button
               onClick={() => setLookupError(null)}
-              className="absolute top-4 right-4 p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 transition-colors"
+              className="absolute top-4 right-4 p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-650 transition-colors"
             >
               <X size={16} />
             </button>
@@ -138,13 +154,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="w-12 h-12 rounded-full bg-red-50 text-red-500 flex items-center justify-center border border-red-100">
                 <AlertTriangle size={24} />
               </div>
-              <h3 className="font-bold text-sm text-slate-800 dark:text-white">ไม่พบคลังข้อมูลครุภัณฑ์</h3>
+              <h3 className="font-bold text-sm text-slate-800 dark:text-white">
+                {language === 'th' ? 'ไม่พบคลังข้อมูลครุภัณฑ์' : 'Asset Not Found'}
+              </h3>
               <p className="text-xs text-slate-500 dark:text-slate-450 leading-relaxed">{lookupError}</p>
               <button
                 onClick={() => setLookupError(null)}
                 className="mt-2 w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-colors cursor-pointer"
               >
-                ตกลง
+                {language === 'th' ? 'ตกลง' : 'OK'}
               </button>
             </div>
           </div>
@@ -159,11 +177,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between pb-3 border-b dark:border-slate-800">
               <div className="flex items-center gap-2 text-sky-500">
                 <QrCode size={18} />
-                <h3 className="text-xs font-extrabold tracking-wide uppercase">ตรวจพบครุภัณฑ์ใหม่</h3>
+                <h3 className="text-xs font-extrabold tracking-wide uppercase">
+                  {language === 'th' ? 'ตรวจพบครุภัณฑ์ใหม่' : 'Asset Scanned'}
+                </h3>
               </div>
               <button
                 onClick={() => setScannedAsset(null)}
-                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 transition-colors"
               >
                 <X size={16} />
               </button>
@@ -177,14 +197,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-800 dark:text-white leading-snug">{scannedAsset.name}</h4>
-                  <p className="text-[10px] text-slate-450 font-mono mt-0.5">รหัสสินค้า: {scannedAsset.assetCode}</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">หมวดหมู่: {scannedAsset.category}</p>
+                  <p className="text-[10px] text-slate-450 font-mono mt-0.5">
+                    {language === 'th' ? 'รหัสสินค้า:' : 'Asset Code:'} {scannedAsset.assetCode}
+                  </p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    {language === 'th' ? 'หมวดหมู่:' : 'Category:'} {scannedAsset.category}
+                  </p>
                 </div>
               </div>
 
               {/* Status information */}
               <div className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800 rounded-xl">
-                <span className="text-[10px] font-semibold text-slate-500">สถานะปัจจุบัน:</span>
+                <span className="text-[10px] font-semibold text-slate-500">
+                  {language === 'th' ? 'สถานะปัจจุบัน:' : 'Current Status:'}
+                </span>
                 <span className={`px-2.5 py-1 text-[10px] font-bold rounded-md uppercase tracking-wider
                   ${scannedAsset.status === 'AVAILABLE' ? 'badge-available' : ''}
                   ${scannedAsset.status === 'BORROWED' ? 'badge-borrowed' : ''}
@@ -192,11 +218,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   ${scannedAsset.status === 'LOST' ? 'badge-lost' : ''}
                   ${scannedAsset.status === 'RETIRED' ? 'badge-retired' : ''}
                 `}>
-                  {scannedAsset.status === 'AVAILABLE' && 'พร้อมใช้งาน'}
-                  {scannedAsset.status === 'BORROWED' && 'ถูกยืมอยู่'}
-                  {scannedAsset.status === 'MAINTENANCE' && 'ซ่อมบำรุง'}
-                  {scannedAsset.status === 'LOST' && 'สูญหาย'}
-                  {scannedAsset.status === 'RETIRED' && 'จำหน่าย'}
+                  {scannedAsset.status === 'AVAILABLE' && (language === 'th' ? 'พร้อมใช้งาน' : 'Available')}
+                  {scannedAsset.status === 'BORROWED' && (language === 'th' ? 'อยู่ระหว่างการยืม' : 'Borrowed')}
+                  {scannedAsset.status === 'MAINTENANCE' && (language === 'th' ? 'ซ่อมบำรุง' : 'Maintenance')}
+                  {scannedAsset.status === 'LOST' && (language === 'th' ? 'สูญหาย' : 'Lost')}
+                  {scannedAsset.status === 'RETIRED' && (language === 'th' ? 'จำหน่าย' : 'Retired')}
                 </span>
               </div>
             </div>
@@ -214,7 +240,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 >
                   <span className="flex items-center gap-2">
                     <CheckCircle2 size={16} />
-                    <span>ต้องการยื่นคำขอยืมสินทรัพย์นี้</span>
+                    <span>{language === 'th' ? 'ต้องการยื่นคำขอยืมสินทรัพย์นี้' : 'Request to Borrow Asset'}</span>
                   </span>
                   <ArrowRight size={14} />
                 </button>
@@ -235,7 +261,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 >
                   <span className="flex items-center gap-2">
                     <Clock size={16} />
-                    <span>บันทึกส่งคืนสินทรัพย์นี้</span>
+                    <span>{language === 'th' ? 'บันทึกส่งคืนสินทรัพย์นี้' : 'Record Return of Asset'}</span>
                   </span>
                   <ArrowRight size={14} />
                 </button>
@@ -247,11 +273,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   setScannedAsset(null);
                   router.push(`/assets/${scannedAsset.id}`);
                 }}
-                className="w-full flex items-center justify-between px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between px-4 py-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-355 rounded-xl text-xs font-bold transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2">
                   <BookOpen size={16} />
-                  <span>ดูรายละเอียดและประวัติเครื่อง</span>
+                  <span>{language === 'th' ? 'ดูรายละเอียดและประวัติเครื่อง' : 'View Details & History'}</span>
                 </span>
                 <ArrowRight size={14} />
               </button>
@@ -260,7 +286,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 onClick={() => setScannedAsset(null)}
                 className="w-full py-2 bg-transparent text-slate-400 hover:text-slate-500 dark:hover:text-slate-300 rounded-xl text-[10px] font-semibold transition-colors cursor-pointer"
               >
-                ปิดหน้าต่างนี้
+                {language === 'th' ? 'ปิดหน้าต่างนี้' : 'Close window'}
               </button>
             </div>
           </div>

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
+import { sendBorrowStatusNotification } from '@/lib/email';
 import { BorrowStatus, AssetStatus, Role } from '@prisma/client';
+
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -80,7 +82,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return updatedRequest;
     });
 
+    sendBorrowStatusNotification(result, 'APPROVED').catch((err) => console.error('Send approve borrow email error:', err));
     return NextResponse.json(result);
+
   } catch (error: any) {
     console.error('Approve borrow request error:', error);
     const status = error.message?.includes('ไม่สามารถ') || error.message?.includes('ไม่พบ') ? 400 : 500;

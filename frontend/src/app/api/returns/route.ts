@@ -3,7 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
 import { createReturnSchema, formatZodError } from '@/lib/validations';
+import { sendReturnRequestNotification } from '@/lib/email';
 import { AssetStatus, BorrowStatus, ConditionStatus, Role } from '@prisma/client';
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -178,7 +180,9 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    sendReturnRequestNotification(result).catch((err) => console.error('Send return email error:', err));
     return NextResponse.json(result, { status: 201 });
+
   } catch (error: any) {
     console.error('Create return error:', error);
     return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาด' }, { status: 500 });

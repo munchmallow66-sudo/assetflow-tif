@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
+import { sendReturnStatusNotification } from '@/lib/email';
 import { BorrowStatus, AssetStatus, Role, ConditionStatus } from '@prisma/client';
+
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -87,7 +89,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return updatedRequest;
     });
 
+    sendReturnStatusNotification(result, 'APPROVED_RETURN').catch((err) => console.error('Send approve return email error:', err));
     return NextResponse.json(result);
+
   } catch (error: any) {
     console.error('Approve asset return error:', error);
     const status = error.message?.includes('ไม่พบ') ? 400 : 500;

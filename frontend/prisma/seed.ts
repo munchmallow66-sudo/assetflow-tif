@@ -446,6 +446,8 @@ async function main() {
     },
   ];
 
+  const adminWatcharaPassword = await bcrypt.hash('IT_save_2026', saltRounds);
+
   for (const empData of tifEmployeesData) {
     const employee = await prisma.employee.create({
       data: {
@@ -458,16 +460,19 @@ async function main() {
       },
     });
 
+    const userPassword = empData.email === 'watchara.pho@tif.ac.th' ? adminWatcharaPassword : defaultMemberPassword;
+
     await prisma.user.create({
       data: {
         email: empData.email,
-        password: defaultMemberPassword,
+        password: userPassword,
         name: `${empData.firstName} ${empData.lastName}`,
         role: empData.role,
         employeeId: employee.id,
       },
     });
   }
+
 
   // 5. Create Assets
   console.log('Creating assets...');

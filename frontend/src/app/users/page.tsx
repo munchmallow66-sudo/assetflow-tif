@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { useLanguage } from '@/components/providers/LanguageProvider';
 import { Trash2, Shield, User } from 'lucide-react';
 
 interface UserData {
@@ -18,6 +19,7 @@ interface UserData {
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
+  const { t, language } = useLanguage();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,17 +40,17 @@ export default function UsersPage() {
 
   const handleDelete = async (id: string, name: string) => {
     if (id === currentUser?.id) {
-      alert('คุณไม่สามารถลบบัญชีผู้ใช้งานของตนเองได้');
+      alert(language === 'th' ? 'คุณไม่สามารถลบบัญชีผู้ใช้งานของตนเองได้' : 'You cannot delete your own account');
       return;
     }
-    if (!confirm(`คุณแน่ใจหรือไม่ที่จะลบบัญชีผู้ใช้งาน: ${name}?`)) return;
+    if (!confirm(language === 'th' ? `คุณแน่ใจหรือไม่ที่จะลบบัญชีผู้ใช้งาน: ${name}?` : `Are you sure you want to delete user: ${name}?`)) return;
 
     try {
       await api.delete(`/users/${id}`);
-      alert('ลบผู้ใช้งานเรียบร้อยแล้ว');
+      alert(language === 'th' ? 'ลบผู้ใช้งานเรียบร้อยแล้ว' : 'User deleted successfully');
       fetchUsers();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'การลบล้มเหลว');
+      alert(err.response?.data?.message || (language === 'th' ? 'การลบล้มเหลว' : 'Delete failed'));
     }
   };
 
@@ -68,8 +70,8 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">จัดการผู้ใช้งานระบบ</h1>
-        <p className="text-slate-500 text-xs mt-1">ตั้งค่าสิทธิ์ กำหนดบทบาท และจัดการข้อมูลบัญชีผู้ใช้งานระบบ</p>
+        <h1 className="text-2xl font-bold text-slate-800">{language === 'th' ? 'จัดการผู้ใช้งานระบบ' : 'System User Management'}</h1>
+        <p className="text-slate-500 text-xs mt-1">{language === 'th' ? 'ตั้งค่าสิทธิ์ กำหนดบทบาท และจัดการข้อมูลบัญชีผู้ใช้งานระบบ' : 'Configure permissions, assign roles, and manage system user accounts'}</p>
       </div>
 
       {loading ? (
@@ -82,12 +84,12 @@ export default function UsersPage() {
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-bold">
-                  <th className="px-6 py-4">ผู้ใช้งาน</th>
-                  <th className="px-6 py-4">อีเมล</th>
-                  <th className="px-6 py-4">รหัสพนักงาน</th>
-                  <th className="px-6 py-4">แผนก / ฝ่าย</th>
-                  <th className="px-6 py-4">บทบาท (Role)</th>
-                  <th className="px-6 py-4 text-center">ดำเนินการ</th>
+                  <th className="px-6 py-4">{language === 'th' ? 'ผู้ใช้งาน' : 'User'}</th>
+                  <th className="px-6 py-4">{language === 'th' ? 'อีเมล' : 'Email'}</th>
+                  <th className="px-6 py-4">{language === 'th' ? 'รหัสพนักงาน' : 'Employee Code'}</th>
+                  <th className="px-6 py-4">{language === 'th' ? 'แผนก / ฝ่าย' : 'Department'}</th>
+                  <th className="px-6 py-4">{language === 'th' ? 'บทบาท (Role)' : 'Role'}</th>
+                  <th className="px-6 py-4 text-center">{language === 'th' ? 'ดำเนินการ' : 'Actions'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -108,7 +110,7 @@ export default function UsersPage() {
                         onClick={() => handleDelete(u.id, u.name)}
                         disabled={u.id === currentUser?.id}
                         className="p-1.5 border border-slate-200 hover:border-red-500 hover:text-red-600 text-slate-400 disabled:opacity-30 rounded-lg transition-colors cursor-pointer"
-                        title="ลบผู้ใช้"
+                        title={language === 'th' ? 'ลบผู้ใช้' : 'Delete User'}
                       >
                         <Trash2 size={14} />
                       </button>

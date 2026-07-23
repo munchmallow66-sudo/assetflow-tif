@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
+import { sendReturnStatusNotification } from '@/lib/email';
 import { BorrowStatus, Role } from '@prisma/client';
+
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -67,7 +69,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return updatedRequest;
     });
 
+    sendReturnStatusNotification(result, 'REJECTED_RETURN').catch((err) => console.error('Send reject return email error:', err));
     return NextResponse.json(result);
+
   } catch (error: any) {
     console.error('Reject asset return error:', error);
     return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาด' }, { status: 500 });

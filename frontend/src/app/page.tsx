@@ -1,16 +1,20 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  ArrowRight, 
-  QrCode, 
-  ShieldCheck, 
-  BarChart3, 
-  BookOpen, 
-  Mail, 
-  Phone, 
+import { useLanguage } from '@/components/providers/LanguageProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
+import { useRouter } from 'next/navigation';
+import Header from '@/components/layout/Header';
+import {
+  ArrowRight,
+  QrCode,
+  ShieldCheck,
+  BarChart3,
+  BookOpen,
+  Mail,
+  Phone,
   Plane,
   ChevronRight,
   FileText,
@@ -21,9 +25,32 @@ import {
 } from 'lucide-react';
 
 export default function LandingPage() {
+  const { user, loading } = useAuth();
+  const { t, language } = useLanguage();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user) {
+      router.replace('/dashboard');
+    }
+  }, [user, router]);
+
+  if (loading || user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-sm font-medium text-slate-400">
+            {t('loadingAuth')}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col relative overflow-hidden font-sans">
-      
+
       {/* Background Hangar & Aircraft Overlay */}
       <div className="absolute inset-0 z-0 select-none pointer-events-none">
         <Image
@@ -41,64 +68,32 @@ export default function LandingPage() {
         <div className="absolute top-[40%] right-[10%] w-[450px] h-[450px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse duration-[8000ms]" />
       </div>
 
-      {/* Header / Navigation */}
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 w-full max-w-7xl px-4 sm:px-6 lg:px-8 z-50">
-        <header className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/30 rounded-2xl sm:rounded-full h-16 sm:h-20 flex items-center justify-between px-6 sm:px-10 shadow-2xl">
-          <Link href="/" className="flex items-center shrink-0">
-            <Image
-              src="/logo.png?v=3"
-              alt="TIF AssetFlow Logo"
-              width={107}
-              height={44}
-              priority
-              className="object-contain h-10 sm:h-11 w-auto"
-              unoptimized
-            />
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
-            <a href="#" className="hover:text-sky-400 transition-colors duration-200">หน้าแรก</a>
-            <a href="#features" className="hover:text-sky-400 transition-colors duration-200">ฟังก์ชันระบบ</a>
-            <a href="#manuals" className="hover:text-sky-400 transition-colors duration-200">คู่มือการใช้งาน</a>
-            <a href="#support" className="hover:text-sky-400 transition-colors duration-200">ติดต่อเรา</a>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <Link
-              href="/login"
-              className="px-5 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-600 hover:to-indigo-700 text-white font-bold rounded-xl sm:rounded-full text-xs transition-all-custom shadow-lg shadow-sky-500/20 hover:shadow-sky-500/35 hover:-translate-y-0.5 btn-press cursor-pointer flex items-center gap-2"
-            >
-              เข้าสู่ระบบสมาชิก
-              <ArrowRight size={14} />
-            </Link>
-          </div>
-        </header>
-      </div>
+      {/* Redesigned Premium Sticky Header */}
+      <Header />
 
       {/* Hero Section */}
       <section className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-12 sm:pt-40 text-center flex flex-col items-center">
 
         {/* Main Headline */}
         <h1 className="text-4xl sm:text-6xl font-extrabold text-white leading-tight tracking-tight max-w-4xl font-heading mb-6">
-          จัดการคลังอุปกรณ์และสินทรัพย์ <br />
+          {t('landingManageTools')} <br />
           <span className="bg-gradient-to-r from-sky-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
-            ให้ง่าย แม่นยำ และปลอดภัย
+            {t('landingEasyPreciseSecure')}
           </span>
         </h1>
-        
+
         {/* Sub-headline */}
         <p className="text-slate-450 text-sm sm:text-base max-w-2xl font-medium leading-relaxed mb-8">
-          ระบบควบคุมคลังครุภัณฑ์และอุปกรณ์ของบริษัทแบบดิจิทัลครบวงจร ยืม-คืนผ่าน QR Code รวดเร็ว
-          และรายงานสถานะครุภัณฑ์และสินทรัพย์ของ **Thai Inter Flying** ได้ทันทีในระบบเดียว
+          {t('landingDesc')}
         </p>
-        
+
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mb-16">
           <Link
             href="/login"
             className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 text-white font-bold rounded-full text-sm transition-all shadow-xl shadow-sky-500/10 hover:shadow-sky-500/20 hover:-translate-y-0.5 btn-press cursor-pointer flex items-center justify-center gap-2"
           >
-            เข้าสู่ระบบสมาชิกเพื่อเริ่มใช้งาน
+            {t('landingLoginStart')}
             <ArrowRight size={16} />
           </Link>
           <a
@@ -106,7 +101,7 @@ export default function LandingPage() {
             className="w-full sm:w-auto px-8 py-4 bg-slate-900/80 hover:bg-slate-850 text-slate-300 font-semibold rounded-full text-sm border border-slate-800 hover:border-slate-700 transition-all flex items-center justify-center gap-2"
           >
             <BookOpen size={16} className="text-sky-400" />
-            คู่มือการใช้งานระบบ
+            {t('landingSystemGuide')}
           </a>
         </div>
 
@@ -117,22 +112,27 @@ export default function LandingPage() {
       <section id="features" className="scroll-mt-28 relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 border-t border-slate-900/85">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
           <h2 className="text-xs font-bold text-sky-400 uppercase tracking-widest font-heading">System Capability</h2>
-          <p className="text-3xl font-bold text-white tracking-wide font-heading">ประสิทธิภาพการจัดการคลังครุภัณฑ์และอุปกรณ์</p>
-          <p className="text-slate-400 text-sm">ฟังก์ชันที่ผ่านการออกแบบตามขั้นตอนปฏิบัติงานจริง สะดวก ปลอดภัย และรัดกุม</p>
+          <p className="text-3xl font-bold text-white tracking-wide font-heading">
+            {t('landingPerformance')}
+          </p>
+          <p className="text-slate-400 text-sm">
+            {t('landingPerformanceDesc')}
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          
+
           {/* Card 1: QR Code Scan (Large - 2 cols) */}
           <div className="md:col-span-2 bg-gradient-to-br from-slate-900/70 to-slate-950/70 border border-slate-800/60 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 hover:border-slate-700/80 transition-all duration-300 shadow-xl relative overflow-hidden group">
             <div className="space-y-4 max-w-md z-10">
               <div className="w-12 h-12 bg-sky-500/10 rounded-xl border border-sky-500/25 flex items-center justify-center text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-all duration-300">
                 <QrCode size={22} />
               </div>
-              <h3 className="text-lg font-bold text-white font-heading">สแกนยืม-คืนรวดเร็วผ่าน QR Code</h3>
+              <h3 className="text-lg font-bold text-white font-heading">
+                {t('landingScanBorrowReturn')}
+              </h3>
               <p className="text-slate-400 text-xs leading-relaxed font-medium">
-                ทำรายการยืม-คืนอุปกรณ์หรือครุภัณฑ์ได้ทันทีผ่านการสแกนด้วยโทรศัพท์หรือแท็บเล็ต 
-                ลดขั้นตอนการกรอกข้อมูล และลดความผิดพลาดด้านเอกสาร
+                {t('landingScanDesc')}
               </p>
             </div>
             {/* Visual Design for Card 1 */}
@@ -150,9 +150,11 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-amber-500/10 rounded-xl border border-amber-500/25 flex items-center justify-center text-amber-400 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
                 <Compass size={22} />
               </div>
-              <h3 className="text-lg font-bold text-white font-heading">ตรวจสอบพิกัด & สถานะคลัง</h3>
+              <h3 className="text-lg font-bold text-white font-heading">
+                {t('landingTrackStatus')}
+              </h3>
               <p className="text-slate-400 text-xs leading-relaxed font-medium">
-                ระบุที่อยู่ของอุปกรณ์ เช่น ล็อกเกอร์, ตู้นิรภัย หรือชั้นเก็บ พร้อมระบบจำแนกสีสถานะ (Available, Borrowed, Maintenance) อย่างชัดเจน
+                {t('landingTrackDesc')}
               </p>
             </div>
           </div>
@@ -163,10 +165,11 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-emerald-500/10 rounded-xl border border-emerald-500/25 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
                 <ShieldCheck size={22} />
               </div>
-              <h3 className="text-lg font-bold text-white font-heading">ระบบอนุมัติคำขอ</h3>
+              <h3 className="text-lg font-bold text-white font-heading">
+                {t('landingApprovalSystem')}
+              </h3>
               <p className="text-slate-400 text-xs leading-relaxed font-medium">
-                เชื่อมต่อขั้นตอนส่งคำขอสำหรับอุปกรณ์ที่ต้องได้รับการอนุมัติจากผู้อนุมัติหรือแอดมิน 
-                เพื่อการบริหารจัดการคลังอุปกรณ์ที่รัดกุมและปลอดภัย
+                {t('landingApprovalDesc')}
               </p>
             </div>
           </div>
@@ -177,10 +180,11 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-indigo-500/10 rounded-xl border border-indigo-500/25 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
                 <BarChart3 size={22} />
               </div>
-              <h3 className="text-lg font-bold text-white font-heading">บันทึกประวัติการซ่อมบำรุง</h3>
+              <h3 className="text-lg font-bold text-white font-heading">
+                {t('landingMaintenanceLog')}
+              </h3>
               <p className="text-slate-400 text-xs leading-relaxed font-medium">
-                มีบันทึกรายงานผลการตรวจเช็คสภาพความเสื่อมถอยหรือปัญหาของอุปกรณ์หลังเสร็จสิ้นการใช้งาน 
-                พร้อมแจ้งเตือนแอดมินดูแลระบบทันทีหากต้องส่งซ่อมบำรุง
+                {t('landingMaintenanceDesc')}
               </p>
             </div>
             {/* Visual Design for Card 4 */}
@@ -192,15 +196,15 @@ export default function LandingPage() {
               <div className="space-y-1 text-[10px]">
                 <div className="flex items-center gap-2 text-slate-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>ตรวจสอบสถานะแบตเตอรี่อุปกรณ์</span>
+                  <span>{t('landingCheckBattery')}</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>เช็คความพร้อมก่อนเปิดใช้งาน</span>
+                  <span>{t('landingCheckReadiness')}</span>
                 </div>
                 <div className="flex items-center gap-2 text-slate-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span>ทดสอบระบบและซอฟต์แวร์</span>
+                  <span>{t('landingTestSystem')}</span>
                 </div>
               </div>
             </div>
@@ -212,20 +216,21 @@ export default function LandingPage() {
       {/* Manuals & Support Section */}
       <section id="manuals" className="scroll-mt-28 relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 border-t border-slate-900/85">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-          
+
           {/* Guides column */}
           <div className="lg:col-span-6 space-y-8">
             <div>
               <h2 className="text-xs font-bold text-sky-400 uppercase tracking-widest font-heading mb-2">Guides & Manuals</h2>
-              <h3 className="text-3xl font-bold text-white font-heading">คู่มือการปฏิบัติงาน</h3>
+              <h3 className="text-3xl font-bold text-white font-heading">
+                {t('landingOperationsManual')}
+              </h3>
               <p className="text-slate-450 text-sm mt-3 leading-relaxed">
-                โปรดเลือกดาวน์โหลดคู่มือการใช้งานระบบให้เหมาะสมกับหน้าที่ความรับผิดชอบของคุณ 
-                เพื่อปฏิบัติตามมาตรฐานขั้นตอนความปลอดภัยอย่างถูกต้อง
+                {t('landingManualDesc')}
               </p>
             </div>
 
             <div className="space-y-4">
-              <a 
+              <a
                 href="/manuals/user-guide.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -236,14 +241,16 @@ export default function LandingPage() {
                     <FileText size={18} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white group-hover:text-sky-400 transition-colors duration-200">คู่มือสำหรับผู้ยืม (พนักงาน & บุคลากร)</h4>
+                    <h4 className="text-sm font-bold text-white group-hover:text-sky-400 transition-colors duration-200">
+                      {t('landingBorrowerGuide')}
+                    </h4>
                     <p className="text-[10px] text-slate-500 font-medium">PDF Document • 4.2 MB</p>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-slate-500 group-hover:text-sky-400 transition-transform group-hover:translate-x-1" />
               </a>
 
-              <a 
+              <a
                 href="/manuals/admin-guide.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -254,7 +261,9 @@ export default function LandingPage() {
                     <FileText size={18} />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors duration-200">คู่มือสำหรับแอดมินและผู้อนุมัติ (Approver & Admin)</h4>
+                    <h4 className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors duration-200">
+                      {t('landingAdminGuide')}
+                    </h4>
                     <p className="text-[10px] text-slate-500 font-medium">PDF Document • 5.8 MB</p>
                   </div>
                 </div>
@@ -267,10 +276,11 @@ export default function LandingPage() {
           <div id="support" className="scroll-mt-28 lg:col-span-6 space-y-8">
             <div>
               <h2 className="text-xs font-bold text-indigo-400 uppercase tracking-widest font-heading mb-2">Helpdesk Channels</h2>
-              <h3 className="text-3xl font-bold text-white font-heading">ฝ่ายสนับสนุนระบบและไอที</h3>
+              <h3 className="text-3xl font-bold text-white font-heading">
+                {t('landingHelpdesk')}
+              </h3>
               <p className="text-slate-450 text-sm mt-3 leading-relaxed">
-                หากพบปัญหาเกี่ยวกับการอนุมัติใช้งานคลังครุภัณฑ์ หรือต้องการลงทะเบียนอุปกรณ์ตัวใหม่ 
-                กรุณาติดต่อเจ้าหน้าที่ดูแลระบบโดยตรงตามช่องทางด้านล่างนี้
+                {t('landingSupportDesc')}
               </p>
             </div>
 
@@ -278,7 +288,9 @@ export default function LandingPage() {
               <div className="p-6 bg-slate-900/30 border border-slate-850 rounded-2xl space-y-4">
                 <div className="flex items-center gap-2.5 text-sky-400">
                   <Sliders size={18} />
-                  <h4 className="text-sm font-bold text-white">ผู้ดูแลระบบ (IT Admin)</h4>
+                  <h4 className="text-sm font-bold text-white">
+                    {t('landingITAdmin')}
+                  </h4>
                 </div>
                 <ul className="space-y-3 text-[11px] text-slate-450 font-medium">
                   <li className="flex items-center gap-2.5">
@@ -287,7 +299,7 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Phone size={14} className="text-slate-600" />
-                    <span>เบอร์ภายใน: ต่อ 104</span>
+                    <span>{t('landingInternalExt')}</span>
                   </li>
                 </ul>
               </div>
@@ -295,7 +307,9 @@ export default function LandingPage() {
               <div className="p-6 bg-slate-900/30 border border-slate-850 rounded-2xl space-y-4">
                 <div className="flex items-center gap-2.5 text-indigo-400">
                   <Activity size={18} />
-                  <h4 className="text-sm font-bold text-white">ฝ่ายบริหารคลังและสินทรัพย์</h4>
+                  <h4 className="text-sm font-bold text-white">
+                    {t('landingWarehouse')}
+                  </h4>
                 </div>
                 <ul className="space-y-3 text-[11px] text-slate-450 font-medium">
                   <li className="flex items-center gap-2.5">
@@ -304,7 +318,7 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-center gap-2.5">
                     <Phone size={14} className="text-slate-600" />
-                    <span>เบอร์ภายใน: ต่อ 112 (อาคารคลังเก็บ)</span>
+                    <span>{t('landingWarehouseExt')}</span>
                   </li>
                 </ul>
               </div>
@@ -319,9 +333,13 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© 2026 Thai Inter Flying Co., Ltd. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="hover:text-slate-350 transition-colors">เข้าสู่ระบบระบบ</Link>
+            <Link href="/login" className="hover:text-slate-350 transition-colors">
+              {t('landingFooter')}
+            </Link>
             <span>•</span>
-            <a href="https://thaiinterflying.com" target="_blank" rel="noopener noreferrer" className="hover:text-slate-350 transition-colors">เว็บไซต์บริษัท</a>
+            <a href="https://thaiinterflying.com" target="_blank" rel="noopener noreferrer" className="hover:text-slate-350 transition-colors">
+              {t('landingCompanyWebsite')}
+            </a>
           </div>
         </div>
       </footer>
