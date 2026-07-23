@@ -11,7 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'TIF AssetFlow',
     description:
       'ระบบบริหารจัดการยืมและคืนครุภัณฑ์ อุปกรณ์ ภายในบริษัท Thai Inter Flying จำกัด',
-    start_url: '/dashboard',
+    start_url: '/',
     display: 'standalone',
     background_color: '#f8fafc',
     theme_color: '#0284c7',

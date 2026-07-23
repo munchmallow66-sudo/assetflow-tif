@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading) return;
 
-    const isPublicPath = pathname === '/login' || pathname === '/';
+    const isPublicPath = pathname === '/login' || pathname === '/' || pathname.startsWith('/scan');
 
     if (!token && !isPublicPath) {
       router.push('/login');
