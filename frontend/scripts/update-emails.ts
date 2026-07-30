@@ -483,6 +483,7 @@ async function run() {
             email: empData.email,
             name: `${empData.firstName} ${empData.lastName}`,
             role: empData.role,
+            password: defaultMemberPassword,
           }
         });
       } else {

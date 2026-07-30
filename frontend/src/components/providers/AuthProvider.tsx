@@ -48,7 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
-        setLoading(false);
         try {
           const res = await api.get('/auth/me');
           setUser(res.data);
@@ -58,6 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem('tif_user');
           setUser(null);
           setToken(null);
+        } finally {
+          setLoading(false);
         }
       } else {
         setLoading(false);
