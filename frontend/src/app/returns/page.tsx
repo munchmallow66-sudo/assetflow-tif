@@ -525,7 +525,7 @@ export default function ReturnsHistoryPage() {
                 {/* Condition note */}
                 {item.conditionNote && (
                   <p className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50/50 dark:bg-slate-800/30 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                    "{item.conditionNote}"
+                    &quot;{item.conditionNote}&quot;
                   </p>
                 )}
               </div>

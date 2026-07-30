@@ -39,14 +39,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     key: keyof typeof translations['th'] | string,
     replacements?: Record<string, string | number>
   ): string => {
-    const dict = translations[language] || translations['th'];
-    // @ts-ignore
+    const dict = (translations[language] || translations['th']) as Record<string, string>;
     let val = dict[key];
     
     if (val === undefined || val === null) {
       // Fallback to TH dict if missing in active language
-      // @ts-ignore
-      val = translations['th'][key];
+      val = (translations['th'] as Record<string, string>)[key];
     }
     
     if (val === undefined || val === null) {

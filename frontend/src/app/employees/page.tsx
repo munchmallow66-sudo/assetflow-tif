@@ -71,11 +71,6 @@ export default function EmployeesPage() {
     phone: '',
   });
 
-  useEffect(() => {
-    setMounted(true);
-    fetchEmployees();
-  }, []);
-
   const fetchEmployees = async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true);
     try {
@@ -98,6 +93,11 @@ export default function EmployeesPage() {
       setRefreshing(false);
     }
   };
+
+  useEffect(() => {
+    setMounted(true);
+    fetchEmployees();
+  }, []);
 
   // Keyboard escape handler for closing modal
   useEffect(() => {

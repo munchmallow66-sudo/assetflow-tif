@@ -42,7 +42,7 @@ export default function LoginPage() {
 
   // Dynamic localization error translation
   const translateError = (err: any, fallback: string) => {
-    let msg = typeof err === 'string' ? err : (err?.message || fallback);
+    const msg = typeof err === 'string' ? err : (err?.message || fallback);
     
     if (language === 'en') {
       if (msg === 'การเข้าสู่ระบบล้มเหลว' || msg.includes('เข้าสู่ระบบล้มเหลว') || msg.toLowerCase().includes('login failed')) {
