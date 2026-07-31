@@ -28,7 +28,8 @@ export async function GET(request: NextRequest) {
       where: {
         OR: [
           { assetCode: cleanCode },
-          { qrCode: cleanCode }
+          { qrCode: cleanCode },
+          { serialNumber: cleanCode }
         ]
       },
       include: {

@@ -52,7 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       // Fetch all assets to lookup the code
       const assetsRes = await api.get('/assets');
       const matchedAsset = assetsRes.data.find(
-        (a: any) => a.assetCode === cleanCode || a.qrCode === cleanCode
+        (a: any) => a.assetCode === cleanCode || a.qrCode === cleanCode || a.serialNumber === cleanCode
       );
 
       if (matchedAsset) {

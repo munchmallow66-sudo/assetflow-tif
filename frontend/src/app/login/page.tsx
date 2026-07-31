@@ -7,7 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAuth } from '@/components/providers/AuthProvider';
 import { useLanguage } from '@/components/providers/LanguageProvider';
-import { Mail, Lock, User, Briefcase, Phone, UserCheck, ShieldAlert, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Briefcase, Phone, UserCheck, ShieldAlert, Eye, EyeOff, Plane, Loader2 } from 'lucide-react';
+import { LoginLoadingOverlay } from '@/components/login/LoginLoadingOverlay';
 
 // Base schemas for type inference
 const loginBaseSchema = z.object({
@@ -309,11 +310,20 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-sky-500 text-white font-semibold rounded-lg py-3 hover:bg-sky-600 transition-all-custom shadow-lg shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-8 cursor-pointer"
+                className="w-full bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 hover:from-sky-400 hover:via-sky-500 hover:to-indigo-500 text-white font-bold rounded-xl py-3.5 px-4 shadow-xl shadow-sky-500/25 hover:shadow-sky-500/40 active:scale-[0.99] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-8 cursor-pointer flex items-center justify-center gap-2 group relative overflow-hidden"
               >
-                {loading 
-                  ? (language === 'th' ? 'กำลังเข้าสู่ระบบ...' : 'Logging in...') 
-                  : (language === 'th' ? 'เข้าสู่ระบบ' : 'Login')}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                    <span>{language === 'th' ? 'กำลังตรวจสอบข้อมูล...' : 'Authenticating...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{language === 'th' ? 'เข้าสู่ระบบ' : 'Login'}</span>
+                    <Plane className="w-4 h-4 text-sky-200 group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform duration-300 -rotate-45" />
+                  </>
+                )}
               </button>
             </form>
           )}
@@ -487,16 +497,28 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-sky-500 text-white font-semibold rounded-lg py-2.5 hover:bg-sky-600 transition-all-custom shadow-lg shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed text-xs mt-6 cursor-pointer"
+                className="w-full bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 hover:from-sky-400 hover:via-sky-500 hover:to-indigo-500 text-white font-bold rounded-xl py-3 px-4 shadow-xl shadow-sky-500/25 hover:shadow-sky-500/40 active:scale-[0.99] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-xs mt-6 cursor-pointer flex items-center justify-center gap-2 group relative overflow-hidden"
               >
-                {loading 
-                  ? (language === 'th' ? 'กำลังลงทะเบียน...' : 'Registering...') 
-                  : (language === 'th' ? 'ลงทะเบียนผู้ใช้งาน' : 'Register User')}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                    <span>{language === 'th' ? 'กำลังลงทะเบียน...' : 'Registering...'}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>{language === 'th' ? 'ลงทะเบียนผู้ใช้งาน' : 'Register User'}</span>
+                    <Plane className="w-4 h-4 text-sky-200 group-hover:translate-x-1 group-hover:-translate-y-0.5 transition-transform duration-300 -rotate-45" />
+                  </>
+                )}
               </button>
             </form>
           )}
         </div>
       </div>
+
+      {/* High-tech Flight Deck Radar Loading Overlay */}
+      <LoginLoadingOverlay isVisible={loading} type={activeTab} />
     </div>
   );
 }

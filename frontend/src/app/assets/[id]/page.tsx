@@ -222,20 +222,27 @@ export default function AssetDetailPage({ params }: { params: Promise<{ id: stri
             {/* Real Generated QR Code */}
             <div className="mx-auto w-36 h-36 bg-white border-2 border-slate-100 rounded-xl flex items-center justify-center p-2.5 relative group">
               <img
-                src={getQrCodeImageUrl(asset.qrCode || asset.assetCode, '200x200')}
+                src={getQrCodeImageUrl(asset.qrCode || asset.assetCode, '200x200', asset.serialNumber)}
                 alt="Asset QR Code"
                 className="w-full h-full object-contain"
               />
             </div>
-            <div className="mt-3 flex flex-col items-center gap-1">
-              <p className="text-[11px] font-mono text-slate-500 bg-slate-50 py-1 px-3 rounded-lg border border-slate-100 inline-block">
-                {asset.qrCode}
-              </p>
+            <div className="mt-3 flex flex-col items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                <span className="text-[11px] font-mono font-semibold text-slate-600 bg-slate-50 py-1 px-2.5 rounded-lg border border-slate-200">
+                  {asset.qrCode || asset.assetCode}
+                </span>
+                {asset.serialNumber && (
+                  <span className="text-[11px] font-mono font-bold text-sky-700 bg-sky-50 py-1 px-2.5 rounded-lg border border-sky-200">
+                    S/N: {asset.serialNumber}
+                  </span>
+                )}
+              </div>
               <a
-                href={getAssetScanUrl(asset.qrCode || asset.assetCode)}
+                href={getAssetScanUrl(asset.qrCode || asset.assetCode, asset.serialNumber)}
                 target="_blank"
                 rel="noreferrer"
-                className="text-[10px] text-sky-600 hover:text-sky-700 underline font-medium mt-1 inline-flex items-center gap-1"
+                className="text-[10px] text-sky-600 hover:text-sky-700 underline font-medium mt-0.5 inline-flex items-center gap-1"
               >
                 <span>{language === 'th' ? 'ทดสอบเปิดหน้าสแกน' : 'Test Scan URL'}</span>
               </a>

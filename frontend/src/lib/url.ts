@@ -19,15 +19,19 @@ export function getAppBaseUrl(): string {
  * Returns the full web scan URL to be embedded in a QR code.
  * Scanning this URL will open the public scan page directly in any mobile camera/browser.
  */
-export function getAssetScanUrl(code: string): string {
+export function getAssetScanUrl(code: string, serialNumber?: string | null): string {
   const baseUrl = getAppBaseUrl();
-  return `${baseUrl}/scan?code=${encodeURIComponent(code)}`;
+  let url = `${baseUrl}/scan?code=${encodeURIComponent(code)}`;
+  if (serialNumber) {
+    url += `&sn=${encodeURIComponent(serialNumber)}`;
+  }
+  return url;
 }
 
 /**
  * Returns the QRServer API image URL for rendering a QR code.
  */
-export function getQrCodeImageUrl(code: string, size = '180x180'): string {
-  const scanUrl = getAssetScanUrl(code);
+export function getQrCodeImageUrl(code: string, size = '180x180', serialNumber?: string | null): string {
+  const scanUrl = getAssetScanUrl(code, serialNumber);
   return `https://api.qrserver.com/v1/create-qr-code/?size=${size}&data=${encodeURIComponent(scanUrl)}`;
 }

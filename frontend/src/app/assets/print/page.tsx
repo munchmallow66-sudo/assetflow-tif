@@ -14,6 +14,7 @@ interface Asset {
   name: string;
   category: string;
   qrCode: string;
+  serialNumber?: string | null;
   status: 'AVAILABLE' | 'BORROWED' | 'MAINTENANCE' | 'LOST' | 'RETIRED';
   currentHolder?: {
     id: string;
@@ -200,17 +201,17 @@ export default function PrintQrPage() {
                 selectedAssets.map((asset) => (
                   <div
                     key={asset.id}
-                    className="border-2 border-slate-800 p-3 rounded-lg flex flex-col items-center justify-between text-center bg-white w-[135px] h-[195px] mx-auto print:break-inside-avoid print:m-2"
+                    className="border-2 border-slate-800 p-2.5 rounded-lg flex flex-col items-center justify-between text-center bg-white w-[140px] min-h-[210px] mx-auto print:break-inside-avoid print:m-2 shadow-sm"
                   >
                     {/* Header Logo Label */}
-                    <div className="text-[8px] font-bold text-slate-900 tracking-wider border-b border-slate-200 pb-1.5 w-full truncate">
+                    <div className="text-[8px] font-bold text-slate-900 tracking-wider border-b border-slate-200 pb-1 w-full truncate">
                       THAI INTER FLYING
                     </div>
                     
-                    {/* QR Code image using real generation API */}
-                    <div className="w-20 h-20 my-2 bg-white flex items-center justify-center">
+                    {/* QR Code image using real generation API with Serial Number encoded */}
+                    <div className="w-20 h-20 my-1 bg-white flex items-center justify-center">
                       <img
-                        src={getQrCodeImageUrl(asset.qrCode || asset.assetCode, '150x150')}
+                        src={getQrCodeImageUrl(asset.qrCode || asset.assetCode, '150x150', asset.serialNumber)}
                         alt={`QR-${asset.assetCode}`}
                         className="w-full h-full object-contain"
                       />
@@ -224,7 +225,15 @@ export default function PrintQrPage() {
                       <p className="text-[8px] text-slate-600 font-bold truncate leading-tight">
                         {asset.name}
                       </p>
-
+                      {asset.serialNumber ? (
+                        <p className="text-[7.5px] font-mono text-sky-700 font-bold truncate leading-tight bg-sky-50 px-1 py-0.5 rounded border border-sky-200">
+                          S/N: {asset.serialNumber}
+                        </p>
+                      ) : (
+                        <p className="text-[7.5px] font-mono text-slate-400 font-medium truncate leading-tight">
+                          S/N: -
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))

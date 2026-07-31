@@ -513,3 +513,98 @@ h6 {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
+/* ===== Aviation & HUD Loading Animations ===== */
+@keyframes radarSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes radarSpinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes planeTakeoff {
+  0% {
+    transform: translateY(4px) scale(0.96);
+    filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.4));
+  }
+  50% {
+    transform: translateY(-6px) scale(1.06);
+    filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.9));
+  }
+  100% {
+    transform: translateY(4px) scale(0.96);
+    filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.4));
+  }
+}
+
+@keyframes hudPulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes scanLine {
+  0% {
+    top: -10%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    top: 110%;
+    opacity: 0;
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.3), inset 0 0 15px rgba(14, 165, 233, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(14, 165, 233, 0.6), inset 0 0 25px rgba(14, 165, 233, 0.4);
+  }
+}
+
+.animate-radar-spin {
+  animation: radarSpin 4s linear infinite;
+}
+
+.animate-radar-spin-reverse {
+  animation: radarSpinReverse 7s linear infinite;
+}
+
+.animate-plane-takeoff {
+  animation: planeTakeoff 2.2s ease-in-out infinite;
+}
+
+.animate-hud-pulse {
+  animation: hudPulse 2s ease-in-out infinite;
+}
+
+.animate-scan-line {
+  animation: scanLine 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 2s infinite ease-in-out;
+}
