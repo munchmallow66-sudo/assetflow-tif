@@ -57,10 +57,23 @@ export async function POST(request: NextRequest) {
     }
     const dto = parsed.data;
 
-    if (!user.employeeId) {
-      return NextResponse.json({
-        message: 'ไม่สามารถทำรายการได้ เนื่องจากบัญชีผู้ใช้ของคุณไม่ได้เชื่อมโยงกับพนักงาน',
-      }, { status: 400 });
+    let finalBorrowerId = user.employeeId;
+
+    // Only Admin can specify targetBorrowerId to borrow on behalf of another employee
+    if (user.role === Role.ADMIN && dto.targetBorrowerId) {
+      const targetEmp = await prisma.employee.findUnique({ where: { id: dto.targetBorrowerId } });
+      if (!targetEmp) {
+        return NextResponse.json({
+          message: 'ไม่พบข้อมูลพนักงานที่ระบุสำหรับยืมแทน',
+        }, { status: 400 });
+      }
+      finalBorrowerId = dto.targetBorrowerId;
+    } else {
+      if (!user.employeeId) {
+        return NextResponse.json({
+          message: 'ไม่สามารถทำรายการได้ เนื่องจากบัญชีผู้ใช้ของคุณไม่ได้เชื่อมโยงกับพนักงาน',
+        }, { status: 400 });
+      }
     }
 
     const asset = await prisma.asset.findUnique({ where: { id: dto.assetId } });
@@ -91,7 +104,7 @@ export async function POST(request: NextRequest) {
     const borrowRequest = await prisma.borrowRequest.create({
       data: {
         requestNo,
-        borrowerId: user.employeeId,
+        borrowerId: finalBorrowerId!,
         assetId: dto.assetId,
         borrowDate: new Date(dto.borrowDate),
         expectedReturnDate: new Date(dto.expectedReturnDate),
@@ -102,7 +115,8 @@ export async function POST(request: NextRequest) {
       include: { asset: true, borrower: true },
     });
 
-    await createAuditLog(user.sub, 'CREATE_BORROW_REQUEST', 'BorrowRequest', borrowRequest.id, null, borrowRequest);
+    const auditAction = finalBorrowerId !== user.employeeId ? 'CREATE_BORROW_REQUEST_ON_BEHALF' : 'CREATE_BORROW_REQUEST';
+    await createAuditLog(user.sub, auditAction, 'BorrowRequest', borrowRequest.id, null, borrowRequest);
     sendBorrowRequestNotification(borrowRequest).catch((err) => console.error('Send borrow request email error:', err));
     return NextResponse.json(borrowRequest, { status: 201 });
 

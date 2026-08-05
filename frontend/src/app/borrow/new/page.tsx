@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import api from '@/lib/api';
 import { useLanguage } from '@/components/providers/LanguageProvider';
+import { useAuth } from '@/components/providers/AuthProvider';
 import { 
   ArrowLeft, 
   Box, 
@@ -20,13 +21,15 @@ import {
   PenTool, 
   CheckCircle, 
   ChevronRight,
-  Info
+  Info,
+  User
 } from 'lucide-react';
 import Link from 'next/link';
 import QRScannerModal from '@/components/common/QRScannerModal';
 
 const borrowSchema = z.object({
   assetId: z.string().nonempty('กรุณาเลือกสินทรัพย์ที่ต้องการยืม'),
+  targetBorrowerId: z.string().optional(),
   borrowDate: z.string().nonempty('กรุณาระบุวันที่ขอยืม'),
   expectedReturnDate: z.string().nonempty('กรุณาระบุวันที่คาดว่าจะส่งคืน'),
   purpose: z.string().nonempty('กรุณาระบุวัตถุประสงค์ในการยืม'),
@@ -49,14 +52,30 @@ interface AvailableAsset {
   category: string;
 }
 
+interface EmployeeItem {
+  id: string;
+  employeeCode: string;
+  firstName: string;
+  lastName: string;
+  department: string;
+}
+
 export default function NewBorrowPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const { t, language } = useLanguage();
   const [assets, setAssets] = useState<AvailableAsset[]>([]);
+  const [employees, setEmployees] = useState<EmployeeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
+  const storedUserJson = typeof window !== 'undefined' ? localStorage.getItem('tif_user') : null;
+  const storedUser = storedUserJson ? JSON.parse(storedUserJson) : null;
+  const currentUser = user || storedUser;
+  const userRoleUpper = currentUser?.role ? String(currentUser.role).toUpperCase() : '';
+  const isAdminOnly = userRoleUpper === 'ADMIN';
+
   // Step control: 1 (Select Asset), 2 (Dates & Purpose), 3 (Confirmation & Signature)
   const [step, setStep] = useState(1);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -87,16 +106,22 @@ export default function NewBorrowPage() {
 
   const selectedAssetId = watch('assetId');
   const selectedAsset = assets.find(a => a.id === selectedAssetId);
+  const targetBorrowerIdVal = watch('targetBorrowerId');
+  const selectedBorrower = employees.find(e => e.id === targetBorrowerIdVal);
   const borrowDateVal = watch('borrowDate');
   const expectedReturnDateVal = watch('expectedReturnDate');
   const purposeVal = watch('purpose');
 
   useEffect(() => {
-    const fetchAvailableAssets = async () => {
+    const fetchData = async () => {
       try {
-        const res = await api.get('/assets');
-        const available = res.data.filter((a: any) => a.status === 'AVAILABLE');
+        const [assetsRes, empRes] = await Promise.all([
+          api.get('/assets'),
+          api.get('/employees').catch(() => ({ data: [] }))
+        ]);
+        const available = assetsRes.data.filter((a: any) => a.status === 'AVAILABLE');
         setAssets(available);
+        setEmployees(empRes.data || []);
         
         // Auto-select asset if assetId query param is present
         if (typeof window !== 'undefined') {
@@ -115,7 +140,7 @@ export default function NewBorrowPage() {
         setLoading(false);
       }
     };
-    fetchAvailableAssets();
+    fetchData();
   }, [setValue, language]);
 
   // Make sure canvas sizing and scaling matches screen resolution
@@ -264,6 +289,48 @@ export default function NewBorrowPage() {
                   {language === 'th' ? 'เลือกสินทรัพย์จากรายการที่มี หรือสแกน QR Code ของสินทรัพย์เพื่อทำรายการ' : 'Select an asset from the available list, or scan the asset\'s QR Code to proceed.'}
                 </p>
               </div>
+
+              {/* ADMIN ON-BEHALF BORROWER SELECTOR (STRICTLY ADMIN ONLY) */}
+              {isAdminOnly && (
+                <div className="p-4 bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <User size={16} className="text-sky-500" />
+                      <span>{language === 'th' ? 'ขอยืมในนามพนักงาน (Borrower)' : 'Borrow on behalf of (Borrower)'}</span>
+                    </label>
+                    <span className="text-[9px] font-bold font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                      ADMIN ON-BEHALF
+                    </span>
+                  </div>
+                  <select
+                    {...register('targetBorrowerId')}
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 dark:text-slate-300 focus:outline-none focus:border-sky-500"
+                  >
+                    <option value="">{language === 'th' ? `-- ยืมในนามตนเอง (${currentUser?.name || 'Admin'}) --` : `-- Borrow for self (${currentUser?.name || 'Admin'}) --`}</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        [{emp.employeeCode}] {emp.firstName} {emp.lastName} ({emp.department})
+                      </option>
+                    ))}
+                  </select>
+
+                  {selectedBorrower && (
+                    <div className="p-2.5 bg-sky-50/60 dark:bg-sky-955/40 border border-sky-200 dark:border-sky-900/60 rounded-xl text-xs flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-sky-800 dark:text-sky-300">
+                          {selectedBorrower.firstName} {selectedBorrower.lastName}
+                        </span>
+                        <span className="text-[11px] text-sky-600 dark:text-sky-400 block">
+                          {selectedBorrower.department} • {language === 'th' ? 'รหัส:' : 'Code:'} {selectedBorrower.employeeCode}
+                        </span>
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded border border-emerald-200">
+                        {language === 'th' ? 'ยืมแทนพนักงานท่านนี้' : 'On-Behalf Borrower'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-3">
                 <div className="flex gap-2">
@@ -440,6 +507,18 @@ export default function NewBorrowPage() {
                 </h3>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">{language === 'th' ? 'ผู้ขอยืมสินทรัพย์:' : 'Borrower:'}</span>
+                    <span className="font-bold text-slate-850 dark:text-white text-xs mt-1 block">
+                      {selectedBorrower ? (
+                        <span className="text-sky-500 font-bold">
+                          [{selectedBorrower.employeeCode}] {selectedBorrower.firstName} {selectedBorrower.lastName} ({selectedBorrower.department})
+                        </span>
+                      ) : (
+                        <span>{currentUser?.name || 'Admin'} ({language === 'th' ? 'ยืมในนามตนเอง' : 'Self'})</span>
+                      )}
+                    </span>
+                  </div>
                   <div>
                     <span className="text-slate-400 dark:text-slate-500 font-bold block uppercase tracking-wider text-[9px]">{language === 'th' ? 'อุปกรณ์ที่ยืม:' : 'Equipment to Borrow:'}</span>
                     <span className="font-bold text-slate-850 dark:text-white text-xs mt-1 block">

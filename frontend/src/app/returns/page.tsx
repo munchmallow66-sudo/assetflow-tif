@@ -176,7 +176,7 @@ export default function ReturnsHistoryPage() {
         {user?.role === 'ADMIN' && (
           <Link
             href="/returns/new"
-            className="flex items-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white px-4 py-2.5 rounded-xl font-semibold text-xs shadow-md shadow-sky-500/20 hover:shadow-lg hover:shadow-sky-500/30 transition-all btn-press cursor-pointer shrink-0"
+            className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl font-semibold text-xs shadow-md shadow-sky-500/20 transition-all btn-press cursor-pointer shrink-0"
           >
             <History size={16} />
             <span>{language === 'th' ? 'รับคืนสินทรัพย์' : 'Return Assets'}</span>

@@ -292,7 +292,7 @@ export default function EmployeesPage() {
           {isAdmin && (
             <button
               onClick={handleOpenCreateModal}
-              className="flex items-center gap-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white px-4 py-2.5 rounded-xl font-semibold text-xs shadow-md shadow-sky-500/20 hover:shadow-lg hover:shadow-sky-500/30 transition-all btn-press cursor-pointer font-heading"
+              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 text-white px-4 py-2.5 rounded-xl font-semibold text-xs shadow-md shadow-sky-500/20 transition-all btn-press cursor-pointer font-heading"
             >
               <UserPlus size={16} />
               <span>{language === 'th' ? 'เพิ่มพนักงาน' : 'Add Staff'}</span>
@@ -535,7 +535,7 @@ export default function EmployeesPage() {
                       {/* Full Name */}
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs font-mono shrink-0 shadow-xs">
+                          <div className="w-8 h-8 rounded-full bg-sky-500 text-white flex items-center justify-center font-bold text-xs font-mono shrink-0 shadow-xs">
                             {initials}
                           </div>
                           <span className="font-bold text-slate-800 dark:text-slate-100">
@@ -645,7 +645,7 @@ export default function EmployeesPage() {
 
                   {/* Profile Info */}
                   <div className="flex items-center gap-3 mt-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs font-mono shrink-0 shadow-xs">
+                    <div className="w-10 h-10 rounded-xl bg-sky-500 text-white flex items-center justify-center font-bold text-xs font-mono shrink-0 shadow-xs">
                       {initials}
                     </div>
                     <div className="overflow-hidden">
@@ -868,7 +868,7 @@ export default function EmployeesPage() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="px-5 py-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/20 transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 font-heading"
+                      className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold rounded-xl shadow-md shadow-sky-500/20 transition-all cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 font-heading"
                     >
                       {submitting ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

@@ -61,8 +61,8 @@ export default function LandingPage() {
           className="object-cover opacity-85 scale-105"
           unoptimized
         />
-        {/* Deep aviation gradients */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/40 via-slate-950/65 to-slate-950" />
+        {/* Deep aviation background overlay */}
+        <div className="absolute inset-0 bg-slate-950/80" />
         {/* Glows simulating runway landing lights */}
         <div className="absolute top-[10%] left-[20%] w-[350px] h-[350px] bg-sky-500/10 rounded-full blur-[100px] animate-pulse duration-[6000ms]" />
         <div className="absolute top-[40%] right-[10%] w-[450px] h-[450px] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse duration-[8000ms]" />
@@ -77,7 +77,7 @@ export default function LandingPage() {
         {/* Main Headline */}
         <h1 className="text-4xl sm:text-6xl font-extrabold text-white leading-tight tracking-tight max-w-4xl font-heading mb-6">
           {t('landingManageTools')} <br />
-          <span className="bg-gradient-to-r from-sky-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
+          <span className="text-sky-400">
             {t('landingEasyPreciseSecure')}
           </span>
         </h1>
@@ -91,7 +91,7 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mb-16">
           <Link
             href="/login"
-            className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-600 hover:to-indigo-600 text-white font-bold rounded-full text-sm transition-all shadow-xl shadow-sky-500/10 hover:shadow-sky-500/20 hover:-translate-y-0.5 btn-press cursor-pointer flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-8 py-4 bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-full text-sm transition-all shadow-xl shadow-sky-500/10 hover:-translate-y-0.5 btn-press cursor-pointer flex items-center justify-center gap-2"
           >
             {t('landingLoginStart')}
             <ArrowRight size={16} />
@@ -123,7 +123,7 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
           {/* Card 1: QR Code Scan (Large - 2 cols) */}
-          <div className="md:col-span-2 bg-gradient-to-br from-slate-900/70 to-slate-950/70 border border-slate-800/60 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 hover:border-slate-700/80 transition-all duration-300 shadow-xl relative overflow-hidden group">
+          <div className="md:col-span-2 bg-slate-900/80 border border-slate-800/60 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 hover:border-slate-700/80 transition-all duration-300 shadow-xl relative overflow-hidden group">
             <div className="space-y-4 max-w-md z-10">
               <div className="w-12 h-12 bg-sky-500/10 rounded-xl border border-sky-500/25 flex items-center justify-center text-sky-400 group-hover:bg-sky-500 group-hover:text-white transition-all duration-300">
                 <QrCode size={22} />
@@ -175,7 +175,7 @@ export default function LandingPage() {
           </div>
 
           {/* Card 4: Maintenance (Large - 2 cols) */}
-          <div className="md:col-span-2 bg-gradient-to-br from-slate-900/70 to-slate-950/70 border border-slate-800/60 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 hover:border-slate-700/80 transition-all duration-300 shadow-xl relative overflow-hidden group">
+          <div className="md:col-span-2 bg-slate-900/80 border border-slate-800/60 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 hover:border-slate-700/80 transition-all duration-300 shadow-xl relative overflow-hidden group">
             <div className="space-y-4 max-w-md z-10">
               <div className="w-12 h-12 bg-indigo-500/10 rounded-xl border border-indigo-500/25 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
                 <BarChart3 size={22} />

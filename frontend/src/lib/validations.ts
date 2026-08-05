@@ -86,6 +86,7 @@ export const updateUserSchema = z.object({
 
 export const createBorrowRequestSchema = z.object({
   assetId: z.string().min(1, 'กรุณาระบุสินทรัพย์ที่ต้องการยืม'),
+  targetBorrowerId: z.string().optional(),
   borrowDate: z.string().min(1, 'กรุณาระบุวันที่ขอยืม'),
   expectedReturnDate: z.string().min(1, 'กรุณาระบุวันที่คาดว่าจะส่งคืน'),
   purpose: z.string().min(1, 'กรุณาระบุวัตถุประสงค์ในการยืม'),

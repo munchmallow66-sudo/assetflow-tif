@@ -76,7 +76,7 @@ export function LoginLoadingOverlay({ isVisible, type = 'login' }: LoginLoadingO
 
         {/* Scan line effect overlay */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
-          <div className="absolute left-0 right-0 h-16 bg-gradient-to-b from-sky-400/10 via-sky-400/5 to-transparent animate-scan-line" />
+          <div className="absolute left-0 right-0 h-16 bg-sky-400/10 animate-scan-line" />
         </div>
 
         {/* Central Aviation Radar & Jet Icon */}
@@ -88,11 +88,11 @@ export function LoginLoadingOverlay({ isVisible, type = 'login' }: LoginLoadingO
           <div className="absolute inset-2 rounded-full border border-indigo-400/20 animate-radar-spin-reverse" />
           
           {/* Glowing Aura Ring */}
-          <div className="absolute inset-5 rounded-full bg-gradient-to-tr from-sky-500/20 to-cyan-400/10 border border-sky-400/40 animate-glow-pulse" />
+          <div className="absolute inset-5 rounded-full bg-sky-500/20 border border-sky-400/40 animate-glow-pulse" />
           
           {/* Radar Sweep Line */}
           <div className="absolute inset-0 rounded-full animate-radar-spin origin-center pointer-events-none">
-            <div className="w-1/2 h-1/2 bg-gradient-to-br from-sky-400/30 to-transparent rounded-tl-full" />
+            <div className="w-1/2 h-1/2 bg-sky-400/20 rounded-tl-full" />
           </div>
 
           {/* Central Logo & Airplane Icon */}
@@ -125,7 +125,7 @@ export function LoginLoadingOverlay({ isVisible, type = 'login' }: LoginLoadingO
         {/* Progress Bar Container */}
         <div className="w-full bg-slate-950/80 border border-slate-800 rounded-full p-1 mb-6 shadow-inner">
           <div
-            className="h-2 rounded-full bg-gradient-to-r from-sky-500 via-cyan-400 to-indigo-500 transition-all duration-700 ease-out shadow-md shadow-sky-500/50"
+            className="h-2 rounded-full bg-sky-500 transition-all duration-700 ease-out shadow-md shadow-sky-500/50"
             style={{ width: `${((step + 1) / 3) * 100}%` }}
           />
         </div>

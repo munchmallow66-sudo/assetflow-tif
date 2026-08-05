@@ -151,13 +151,13 @@ export default function Sidebar() {
       >
         <div className="flex-1 flex flex-col overflow-y-auto">
           {/* Logo Brand Header */}
-          <div className="h-20 flex items-center justify-between border-b border-slate-800/60 px-5 shrink-0 bg-gradient-to-b from-[#0c0f17] to-[#080a0f] relative overflow-hidden">
+          <div className="h-20 flex items-center justify-between border-b border-slate-800/60 px-5 shrink-0 bg-slate-900 relative overflow-hidden">
             {/* Background Ambient Glow */}
             <div className="absolute -top-10 -left-10 w-32 h-32 bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
             <div className="absolute -top-10 right-0 w-28 h-28 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
             <div className="flex items-center gap-3 z-10">
-              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/90 border border-slate-700/60 shadow-inner group">
+              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/60 shadow-inner group">
                 <div className="absolute inset-0 bg-sky-500/20 rounded-xl blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <Image
                   src="/logo.png?v=3"
@@ -176,7 +176,7 @@ export default function Sidebar() {
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 mt-1.5">
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-gradient-to-r from-sky-500/15 to-indigo-500/15 border border-sky-500/30 text-[8px] font-bold text-sky-400 tracking-wider uppercase">
+                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-sky-500/15 border border-sky-500/30 text-[8px] font-bold text-sky-400 tracking-wider uppercase">
                     <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
                     ASSETFLOW PORTAL
                   </span>
@@ -219,13 +219,13 @@ export default function Sidebar() {
                           onClick={() => setIsOpen(false)}
                           className={`relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
                             isActive
-                              ? 'bg-gradient-to-r from-sky-500/15 via-indigo-500/10 to-transparent text-white border border-sky-500/30 shadow-md shadow-sky-500/5 font-bold'
+                              ? 'bg-sky-500/15 text-white border border-sky-500/30 shadow-md shadow-sky-500/5 font-bold'
                               : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/40 border border-transparent group'
                           }`}
                         >
                           {/* Active Indicator bar */}
                           {isActive && (
-                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-gradient-to-b from-cyan-400 via-sky-500 to-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(56,189,248,0.8)]" />
+                            <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-6 bg-sky-400 rounded-r-full shadow-[0_0_10px_rgba(56,189,248,0.8)]" />
                           )}
 
                           <div className="flex items-center gap-3">
@@ -270,7 +270,7 @@ export default function Sidebar() {
             </div>
             <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800/80">
               <div
-                className="h-full bg-gradient-to-r from-sky-400 via-indigo-500 to-purple-500 rounded-full transition-all duration-700 shadow-[0_0_10px_rgba(99,102,241,0.6)]"
+                className="h-full bg-sky-500 rounded-full transition-all duration-700 shadow-[0_0_10px_rgba(99,102,241,0.6)]"
                 style={{ width: `${storageUtil}%` }}
               />
             </div>
@@ -284,9 +284,9 @@ export default function Sidebar() {
         {/* Profile Card & Footer Actions */}
         <div className="p-3.5 border-t border-slate-800/60 bg-[#07090e] shrink-0 space-y-3">
           {/* User Info Tile */}
-          <div className="flex items-center gap-3 p-2 bg-gradient-to-r from-slate-900/90 to-[#0b0e15]/90 rounded-2xl border border-slate-800/80 shadow-md">
+          <div className="flex items-center gap-3 p-2 bg-slate-900 rounded-2xl border border-slate-800/80 shadow-md">
             <div className="relative">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-400 via-indigo-500 to-indigo-600 text-white flex items-center justify-center font-black text-xs shadow-md border border-white/10 select-none">
+              <div className="w-9 h-9 rounded-xl bg-sky-500 text-white flex items-center justify-center font-black text-xs shadow-md border border-white/10 select-none">
                 {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
               </div>
               <span className="w-2.5 h-2.5 bg-emerald-500 ring-2 ring-[#080a0f] rounded-full absolute bottom-0 right-0 animate-pulse" />

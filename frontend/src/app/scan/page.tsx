@@ -298,7 +298,7 @@ function PublicScanContent() {
 
             {/* BORROWER HIGHLIGHT SECTION (Key Feature Requested by User) */}
             {asset.status === 'BORROWED' && (asset.currentHolder || activeBorrow) ? (
-              <div className="bg-gradient-to-br from-rose-950/40 via-slate-900 to-rose-950/20 border-2 border-rose-500/40 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden">
+              <div className="bg-slate-900 border-2 border-rose-500/40 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative overflow-hidden">
                 {/* Accent glow */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -388,7 +388,7 @@ function PublicScanContent() {
                 </div>
               </div>
             ) : asset.status === 'AVAILABLE' ? (
-              <div className="bg-gradient-to-br from-emerald-950/40 via-slate-900 to-emerald-950/20 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="bg-slate-900 border border-emerald-500/30 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
                   <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center text-emerald-400 shrink-0">
                     <CheckCircle2 size={32} />

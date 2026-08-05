@@ -310,9 +310,8 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 hover:from-sky-400 hover:via-sky-500 hover:to-indigo-500 text-white font-bold rounded-xl py-3.5 px-4 shadow-xl shadow-sky-500/25 hover:shadow-sky-500/40 active:scale-[0.99] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-8 cursor-pointer flex items-center justify-center gap-2 group relative overflow-hidden"
+                className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl py-3 px-4 shadow-lg shadow-sky-500/20 active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm mt-8 cursor-pointer flex items-center justify-center gap-2"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin shrink-0" />
@@ -497,9 +496,8 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-sky-500 via-sky-600 to-indigo-600 hover:from-sky-400 hover:via-sky-500 hover:to-indigo-500 text-white font-bold rounded-xl py-3 px-4 shadow-xl shadow-sky-500/25 hover:shadow-sky-500/40 active:scale-[0.99] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-xs mt-6 cursor-pointer flex items-center justify-center gap-2 group relative overflow-hidden"
+                className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold rounded-xl py-3 px-4 shadow-lg shadow-sky-500/20 active:scale-[0.99] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-xs mt-6 cursor-pointer flex items-center justify-center gap-2"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none" />
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin shrink-0" />

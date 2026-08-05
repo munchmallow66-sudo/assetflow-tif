@@ -370,7 +370,7 @@ export default function Header() {
               /* Premium Login Button */
               <Link
                 href="/login"
-                className="hidden sm:flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-full shadow-md shadow-blue-500/15 hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0 select-none group"
+                className="hidden sm:flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-md transition-all duration-150 hover:-translate-y-0.5 active:translate-y-0 select-none group"
               >
                 <span>{t('landingLogin')}</span>
                 <ArrowRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -455,7 +455,7 @@ export default function Header() {
             <Link
               href="/login"
               onClick={() => setIsMenuOpen(false)}
-              className="flex items-center justify-between w-full mt-4 px-5 py-3 text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-full shadow-md transition-all text-center select-none"
+              className="flex items-center justify-between w-full mt-4 px-5 py-3 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-md transition-all text-center select-none"
             >
               <span>{t('landingLogin')}</span>
               <ArrowRight size={14} />
@@ -679,9 +679,7 @@ export default function Header() {
                 <div className="space-y-5">
 
                   {/* Asset Main Details Card */}
-                  <div className="relative group overflow-hidden bg-gradient-to-b from-slate-950/80 to-slate-950/40 border border-white/5 rounded-2xl p-5 space-y-4 shadow-inner">
-                    {/* Glowing effect line on top */}
-                    <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-sky-500/30 to-transparent"></div>
+                  <div className="relative group overflow-hidden bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-4 shadow-inner">
 
                     {/* Asset Name with icon */}
                     <div className="flex items-start gap-3">
@@ -737,8 +735,7 @@ export default function Header() {
                     </span>
 
                     {scannedAsset.status === 'BORROWED' && scannedAsset.currentHolder ? (
-                      <div className="relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent border border-blue-500/20 rounded-2xl p-5 space-y-4 shadow-[0_4px_20px_-4px_rgba(59,130,246,0.15)]">
-                        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-blue-500/30 to-transparent"></div>
+                      <div className="relative overflow-hidden bg-slate-900 border border-blue-500/20 rounded-2xl p-5 space-y-4 shadow-[0_4px_20px_-4px_rgba(59,130,246,0.15)]">
 
                         <div className="flex items-center gap-3 pb-3 border-b border-white/5">
                           <div className="w-10 h-10 rounded-full bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-blue-400 shrink-0 shadow-[0_0_15px_rgba(59,130,246,0.15)]">
@@ -770,8 +767,7 @@ export default function Header() {
                         </div>
                       </div>
                     ) : scannedAsset.status === 'AVAILABLE' ? (
-                      <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent border border-emerald-500/20 rounded-2xl p-5 flex gap-4 shadow-[0_4px_20px_-4px_rgba(16,185,129,0.15)]">
-                        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
+                      <div className="relative overflow-hidden bg-slate-900 border border-emerald-500/20 rounded-2xl p-5 flex gap-4 shadow-[0_4px_20px_-4px_rgba(16,185,129,0.15)]">
 
                         <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
                           <CheckCircle2 size={20} className="animate-pulse" />
@@ -782,8 +778,7 @@ export default function Header() {
                         </div>
                       </div>
                     ) : scannedAsset.status === 'MAINTENANCE' ? (
-                      <div className="relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent border border-amber-500/20 rounded-2xl p-5 flex gap-4 shadow-[0_4px_20px_-4px_rgba(245,158,11,0.15)]">
-                        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500/30 to-transparent"></div>
+                      <div className="relative overflow-hidden bg-slate-900 border border-amber-500/20 rounded-2xl p-5 flex gap-4 shadow-[0_4px_20px_-4px_rgba(245,158,11,0.15)]">
 
                         <div className="w-10 h-10 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.15)]">
                           <Clock size={20} className="animate-pulse" />
@@ -812,7 +807,7 @@ export default function Header() {
             <div className="p-4 bg-slate-950/60 border-t border-white/5 flex justify-end">
               <button
                 onClick={() => setIsResultOpen(false)}
-                className="px-6 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-650 hover:from-sky-600 hover:to-indigo-700 text-white rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 duration-200 cursor-pointer shadow-md shadow-sky-500/10 hover:shadow-sky-500/25 border-none"
+                className="px-6 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs font-bold transition-all hover:scale-[1.02] active:scale-95 duration-200 cursor-pointer shadow-md shadow-sky-500/10 hover:shadow-sky-500/25 border-none"
               >
                 {language === 'th' ? 'ตกลง' : 'OK'}
               </button>

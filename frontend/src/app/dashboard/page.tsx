@@ -578,7 +578,7 @@ export default function DashboardPage() {
       {/* 1. EXECUTIVE HERO COMMAND BANNER */}
       <div className="relative rounded-3xl p-6 sm:p-9 shadow-2xl transition-all duration-300">
         {/* Background Layer with Overflow Hidden */}
-        <div className="absolute inset-0 overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950 dark:from-[#0b1220] dark:via-[#0f172a] dark:to-[#1e1b4b] border border-slate-800/80 pointer-events-none">
+        <div className="absolute inset-0 overflow-hidden rounded-3xl bg-slate-900 dark:bg-[#0b1220] border border-slate-800/80 pointer-events-none">
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
           <div className="absolute bottom-0 left-1/3 -mb-12 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl"></div>
         </div>
@@ -598,7 +598,7 @@ export default function DashboardPage() {
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight font-heading leading-tight">
-              {greetingText}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-blue-200">{user?.name}</span>
+              {greetingText}, <span className="text-sky-400">{user?.name}</span>
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-300/80 font-medium leading-relaxed">
@@ -853,8 +853,8 @@ export default function DashboardPage() {
               <AreaChart data={borrowTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="borrowGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.35}/>
-                    <stop offset="100%" stopColor="#38bdf8" stopOpacity={0}/>
+                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.15}/>
+                    <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.15}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
