@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Real employee roster used by prisma/seed.ts (contains personal data)
+prisma/employees.csv
