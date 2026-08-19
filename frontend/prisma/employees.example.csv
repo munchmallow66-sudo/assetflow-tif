@@ -1,0 +1,7 @@
+employeeCode,firstName,lastName,department,email,phone,role
+900001,สมชาย,ใจดี (ชาย),Owner (BKK),somchai.jai@example.com,081 000 0001,ADMIN
+900002,ร.อ.สมศักดิ์,รักการบิน (ศักดิ์),Flight Instructor (PHS 1Y),somsak.rak@example.com,081 000 0002,STAFF
+900003,นางสาวสุดา,มั่นคง (ดา),Director of Maintenance (PHS 1Y),suda.man@example.com,081 000 0003,APPROVER
+900004,นายวีระ,ตั้งใจ (ระ),Operation (BKK),weera.tang@example.com,,STAFF
+900005,นางสาวมาลี,ศรีสุข (ลี),Accounting (BKK),malee.sri@example.com,081 000 0005,VIEWER
+900006,นายอนุชา,พัฒนา (ชา),IT Support (BKK),anucha.pat@example.com,081 000 0006,ADMIN

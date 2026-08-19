@@ -64,6 +64,7 @@ model Employee {
   department     String
   email          String          @unique
   phone          String?
+  isActive       Boolean         @default(true)
   user           User?
   borrowRequests BorrowRequest[]
   assets         Asset[]         @relation("CurrentHolder")
@@ -97,9 +98,9 @@ model BorrowRequest {
   id                 String        @id @default(uuid())
   requestNo          String        @unique
   borrowerId         String
-  borrower           Employee      @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  borrower           Employee      @relation(fields: [borrowerId], references: [id], onDelete: Restrict)
   assetId            String
-  asset              Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  asset              Asset         @relation(fields: [assetId], references: [id], onDelete: Restrict)
   borrowDate         DateTime
   expectedReturnDate DateTime
   purpose            String
@@ -124,7 +125,7 @@ model AssetReturn {
   borrowRequestId    String          @unique
   borrowRequest      BorrowRequest   @relation(fields: [borrowRequestId], references: [id], onDelete: Cascade)
   assetId            String
-  asset              Asset           @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  asset              Asset           @relation(fields: [assetId], references: [id], onDelete: Restrict)
   returnDate         DateTime        @default(now())
   condition          ConditionStatus
   conditionNote      String?

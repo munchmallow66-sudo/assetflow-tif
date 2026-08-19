@@ -12,7 +12,7 @@ import {
   Plus,
   Eye,
   Edit2,
-  Trash2,
+  Archive,
   Box,
   QrCode,
   LayoutGrid,
@@ -104,11 +104,14 @@ function AssetsContent() {
     fetchAssets();
   }, []);
 
-  const deleteAsset = async (id: string, name: string) => {
+  const retireAsset = async (id: string, name: string) => {
     if (!confirm(t('confirmDeleteAsset', { name }) || `Are you sure you want to delete ${name}?`)) return;
     try {
-      await api.delete(`/assets/${id}`);
-      toast.success(t('actionCompleted') || 'Success', t('assetDeleted', { name }) || `Asset ${name} deleted`);
+      const res = await api.delete(`/assets/${id}`);
+      toast.success(
+        t('actionCompleted') || 'Success',
+        res.data?.message || t('assetDeleted', { name }) || `Asset ${name} deleted`,
+      );
       fetchAssets();
     } catch (err: any) {
       toast.error(t('assetDeleteFailed') || 'Error', err.response?.data?.message || t('cannotDeleteAsset') || 'Could not delete asset');
@@ -560,11 +563,11 @@ function AssetsContent() {
                         <Edit2 size={14} />
                       </Link>
                       <button
-                        onClick={() => deleteAsset(asset.id, asset.name)}
+                        onClick={() => retireAsset(asset.id, asset.name)}
                         className="p-2 border border-slate-200 dark:border-slate-700 hover:border-rose-500 hover:text-rose-600 text-slate-500 dark:text-slate-400 rounded-xl transition-colors cursor-pointer"
-                        title="Delete Asset"
+                        title={t('confirmDeleteAssetTitle') || 'Retire asset'}
                       >
-                        <Trash2 size={14} />
+                        <Archive size={14} />
                       </button>
                     </div>
                   )}
@@ -665,11 +668,11 @@ function AssetsContent() {
                               <Edit2 size={14} />
                             </Link>
                             <button
-                              onClick={() => deleteAsset(asset.id, asset.name)}
+                              onClick={() => retireAsset(asset.id, asset.name)}
                               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-rose-500 hover:text-rose-600 text-slate-500 transition-colors"
-                              title="Delete"
+                              title={t('confirmDeleteAssetTitle') || 'Retire asset'}
                             >
-                              <Trash2 size={14} />
+                              <Archive size={14} />
                             </button>
                           </>
                         )}

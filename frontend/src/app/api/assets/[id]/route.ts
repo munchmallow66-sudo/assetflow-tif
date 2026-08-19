@@ -4,7 +4,7 @@ import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
 import { updateAssetSchema, formatZodError } from '@/lib/validations';
 import { createAuditLog } from '@/lib/audit-log';
-import { AssetStatus, Role } from '@prisma/client';
+import { AssetStatus, BorrowStatus, Role } from '@prisma/client';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -89,6 +89,22 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 }
 
+/**
+ * Statuses that mean the asset is still committed to an open borrow flow.
+ * An asset in any of these states must not be retired until the flow is closed.
+ */
+const OPEN_BORROW_STATUSES = [
+  BorrowStatus.PENDING,
+  BorrowStatus.APPROVED,
+  BorrowStatus.BORROWED,
+  BorrowStatus.OVERDUE,
+  BorrowStatus.RETURN_PENDING,
+];
+
+/**
+ * Soft-delete only. Assets are never physically removed, because BorrowRequest
+ * and AssetReturn rows reference them and carry the audit trail of the asset.
+ */
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     const user = await getAuthUser(request);
@@ -102,24 +118,55 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'ไม่พบข้อมูลสินทรัพย์ที่ระบุ' }, { status: 404 });
     }
 
-    try {
-      await prisma.asset.delete({ where: { id } });
-      await createAuditLog(user.sub, 'DELETE_ASSET', 'Asset', id, asset, null);
-    } catch {
-      const retired = await prisma.asset.update({
-        where: { id },
-        data: { status: AssetStatus.RETIRED },
-      });
-      await createAuditLog(user.sub, 'RETIRE_ASSET', 'Asset', id, asset, retired);
-      return NextResponse.json({
-        success: true,
-        message: 'เปลี่ยนสถานะเป็น RETIRED เนื่องจากมีประวัติการทำรายการในระบบ',
-      });
+    if (asset.status === AssetStatus.RETIRED) {
+      return NextResponse.json(
+        { message: 'สินทรัพย์นี้ถูกจำหน่ายออกจากระบบไปแล้ว ไม่จำเป็นต้องดำเนินการซ้ำ' },
+        { status: 400 },
+      );
     }
 
-    return NextResponse.json({ success: true, message: 'ลบสินทรัพย์เรียบร้อยแล้ว' });
+    const openBorrowCount = await prisma.borrowRequest.count({
+      where: { assetId: id, status: { in: OPEN_BORROW_STATUSES } },
+    });
+    if (openBorrowCount > 0) {
+      return NextResponse.json(
+        {
+          message:
+            'ไม่สามารถจำหน่ายสินทรัพย์นี้ได้ เนื่องจากยังมีรายการยืมที่ค้างอยู่ในระบบ จำนวน ' +
+            openBorrowCount +
+            ' รายการ กรุณาปิดรายการยืม-คืนให้เรียบร้อยก่อน',
+        },
+        { status: 400 },
+      );
+    }
+
+    const [borrowCount, returnCount] = await Promise.all([
+      prisma.borrowRequest.count({ where: { assetId: id } }),
+      prisma.assetReturn.count({ where: { assetId: id } }),
+    ]);
+
+    const retired = await prisma.asset.update({
+      where: { id },
+      data: { status: AssetStatus.RETIRED, currentHolderId: null },
+    });
+
+    await createAuditLog(user.sub, 'RETIRE_ASSET', 'Asset', id, asset, retired);
+
+    const hasHistory = borrowCount > 0 || returnCount > 0;
+    return NextResponse.json({
+      success: true,
+      softDeleted: true,
+      asset: retired,
+      message: hasHistory
+        ? 'เปลี่ยนสถานะเป็น RETIRED (จำหน่ายแล้ว) แทนการลบ เนื่องจากสินทรัพย์นี้มีประวัติการยืม ' +
+          borrowCount +
+          ' รายการ และประวัติการคืน ' +
+          returnCount +
+          ' รายการ ซึ่งต้องเก็บไว้เพื่อการตรวจสอบย้อนหลัง'
+        : 'เปลี่ยนสถานะเป็น RETIRED (จำหน่ายแล้ว) แทนการลบ เพื่อรักษาความต่อเนื่องของทะเบียนทรัพย์สินและ Audit Log',
+    });
   } catch (error: any) {
-    console.error('Delete asset error:', error);
+    console.error('Retire asset error:', error);
     return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

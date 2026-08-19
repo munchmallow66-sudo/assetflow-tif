@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const today = new Date();
     const overdueRequests = await prisma.borrowRequest.findMany({
       where: {
-        status: BorrowStatus.BORROWED,
+        status: { in: [BorrowStatus.BORROWED, BorrowStatus.OVERDUE] },
         expectedReturnDate: { lt: today },
       },
       include: {

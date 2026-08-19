@@ -6,6 +6,14 @@ import { ToastProvider } from "@/components/providers/ToastProvider";
 import { LanguageProvider } from "@/components/providers/LanguageProvider";
 import AppLayout from "@/components/layout/AppLayout";
 
+/**
+ * Nonce-based CSP requires dynamic rendering: Next injects the nonce during
+ * server rendering by reading the Content-Security-Policy header off the
+ * request, and a page prerendered at build time has no request to read.
+ * Every page here is behind a session or renders per-viewer anyway.
+ */
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://assetflow.tif.ac.th"),
 

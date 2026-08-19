@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       include: {
         currentHolder: true,
         borrowRequests: {
-          where: { status: BorrowStatus.BORROWED },
+          where: { status: { in: [BorrowStatus.BORROWED, BorrowStatus.OVERDUE] } },
           include: { borrower: true },
           orderBy: { createdAt: 'desc' },
           take: 1,

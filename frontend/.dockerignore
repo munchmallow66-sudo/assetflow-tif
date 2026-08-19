@@ -1,0 +1,28 @@
+# Host build artefacts. node_modules in particular MUST NOT be copied: the
+# builder stage installs Linux binaries, and copying the host's Windows/macOS
+# ones over them breaks prisma generate and next build inside the image.
+node_modules
+.next
+out
+build
+dist
+
+# Secrets never belong in an image layer
+.env
+.env.*
+!.env.example
+
+# Real employee roster (personal data), read by prisma/seed.ts at runtime
+prisma/employees.csv
+
+# Local noise
+.git
+.gitignore
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage
+.DS_Store
+Dockerfile
+.dockerignore

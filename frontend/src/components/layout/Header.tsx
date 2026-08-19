@@ -26,28 +26,23 @@ import {
   Tag,
   FolderOpen,
   Barcode,
-  Fingerprint
+  Fingerprint,
+  Loader2
 } from 'lucide-react';
 import QRScannerModal from '@/components/common/QRScannerModal';
+import api from '@/lib/api';
 
-interface MockAsset {
+type AssetStatus = 'AVAILABLE' | 'BORROWED' | 'MAINTENANCE' | 'LOST' | 'RETIRED';
+
+interface AssetSearchResult {
   id: string;
+  assetCode: string;
   name: string;
-  code: string;
   category: string;
-  status: 'AVAILABLE' | 'BORROWED' | 'MAINTENANCE';
+  status: AssetStatus;
 }
 
-const mockAssets: MockAsset[] = [
-  { id: '1', name: 'Cessna 172 Flight Manual (POH)', code: 'MAN-C172-001', category: 'Manuals', status: 'AVAILABLE' },
-  { id: '2', name: 'Garmin G1000 Avionics Trainer', code: 'EQP-AV-G1000', category: 'Avionics', status: 'BORROWED' },
-  { id: '3', name: 'Bose A20 Aviation Headset', code: 'ACC-HD-023', category: 'Accessories', status: 'AVAILABLE' },
-  { id: '4', name: 'iPad Pro EFB (Electronic Flight Bag)', code: 'EQP-TAB-012', category: 'Electronics', status: 'AVAILABLE' },
-  { id: '5', name: 'Standard Aircraft Fuel Tester', code: 'TLS-FT-004', category: 'Tools', status: 'AVAILABLE' },
-  { id: '6', name: 'High-Visibility Safety Vest XL', code: 'SAF-VEST-002', category: 'Safety', status: 'MAINTENANCE' },
-  { id: '7', name: 'Aviation First Aid Kit', code: 'SAF-FAK-001', category: 'Safety', status: 'AVAILABLE' },
-  { id: '8', name: 'Piper Archer PA-28 POH', code: 'MAN-P28A-002', category: 'Manuals', status: 'AVAILABLE' },
-];
+const SEARCH_DEBOUNCE_MS = 300;
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -58,6 +53,9 @@ export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<AssetSearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchFailed, setSearchFailed] = useState(false);
   const [activeSection, setActiveSection] = useState('#');
   const [isMac, setIsMac] = useState(false);
 
@@ -94,8 +92,50 @@ export default function Header() {
       setTimeout(() => searchInputRef.current?.focus(), 50);
     } else {
       setSearchQuery('');
+      setSearchResults([]);
+      setSearchFailed(false);
     }
   }, [isSearchOpen]);
+
+  // Debounced registry lookup. The query is filtered server side, so the
+  // browser never pulls the whole registry down to search it locally.
+  // /api/assets requires a session, so anonymous visitors are asked to sign in
+  // instead of firing a request that can only come back 401.
+  useEffect(() => {
+    const query = searchQuery.trim();
+
+    if (!isSearchOpen || !user || !query) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      setSearchFailed(false);
+      return;
+    }
+
+    setSearchLoading(true);
+    setSearchFailed(false);
+    let cancelled = false;
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get('/assets', { params: { q: query } });
+        if (cancelled) return;
+        setSearchResults(Array.isArray(res.data) ? res.data : []);
+      } catch {
+        if (cancelled) return;
+        setSearchResults([]);
+        setSearchFailed(true);
+      } finally {
+        if (!cancelled) setSearchLoading(false);
+      }
+    }, SEARCH_DEBOUNCE_MS);
+
+    // Cancels the pending timer and makes any in-flight response a no-op, so a
+    // slow earlier request cannot overwrite the results of a later keystroke.
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery, isSearchOpen, user]);
 
   // Click outside listener for dropdown
   useEffect(() => {
@@ -113,7 +153,7 @@ export default function Header() {
     try {
       const res = await fetch(`/api/assets/scan-public?code=${encodeURIComponent(decodedText)}`);
       if (!res.ok) {
-        if (res.status === 444) {
+        if (res.status === 404) {
           setScanError(language === 'th' ? 'ไม่พบข้อมูลครุภัณฑ์หรือรหัสที่สแกนในระบบ' : 'No asset matches this scanned code.');
         } else {
           setScanError(language === 'th' ? 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูลครุภัณฑ์' : 'Error checking asset info.');
@@ -181,15 +221,7 @@ export default function Header() {
     { label: language === 'th' ? 'ติดต่อเรา' : 'Contact', href: '#support' },
   ];
 
-  const filteredAssets = searchQuery.trim()
-    ? mockAssets.filter(asset =>
-      asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      asset.category.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    : [];
-
-  const getStatusBadge = (status: MockAsset['status']) => {
+  const getStatusBadge = (status: AssetStatus) => {
     switch (status) {
       case 'AVAILABLE':
         return <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md">Available</span>;
@@ -197,6 +229,10 @@ export default function Header() {
         return <span className="px-2 py-0.5 text-[10px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md">Borrowed</span>;
       case 'MAINTENANCE':
         return <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md">Maintenance</span>;
+      case 'LOST':
+        return <span className="px-2 py-0.5 text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-md">Lost</span>;
+      case 'RETIRED':
+        return <span className="px-2 py-0.5 text-[10px] font-semibold bg-slate-500/10 text-slate-400 border border-slate-500/20 rounded-md">Retired</span>;
     }
   };
 
@@ -524,7 +560,7 @@ export default function Header() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={language === 'th' ? 'พิมพ์ชื่อ หรือรหัสเพื่อค้นหาตัวอย่างครุภัณฑ์...' : 'Type to search demo assets or codes...'}
+                placeholder={language === 'th' ? 'พิมพ์ชื่อ หรือรหัสครุภัณฑ์เพื่อค้นหา...' : 'Search assets by name or code...'}
                 className="w-full bg-transparent text-sm text-white placeholder-slate-500 border-none outline-none focus:ring-0"
               />
               <button
@@ -538,72 +574,69 @@ export default function Header() {
 
             {/* Results Panel */}
             <div className="max-h-[350px] overflow-y-auto p-2.5 space-y-1">
-              {!searchQuery.trim() ? (
+              {!user ? (
+                <div className="flex flex-col items-center justify-center py-8 text-slate-500 gap-2 px-6 text-center">
+                  <ShieldCheck size={20} className="text-slate-500" />
+                  <span className="text-xs font-medium leading-relaxed">
+                    {language === 'th'
+                      ? 'กรุณาเข้าสู่ระบบเพื่อค้นหาครุภัณฑ์ในทะเบียนจริง'
+                      : 'Sign in to search the live asset registry.'}
+                  </span>
+                </div>
+              ) : !searchQuery.trim() ? (
+                <div className="flex flex-col items-center justify-center py-8 text-slate-500 gap-2 px-6 text-center">
+                  <Search size={20} className="text-slate-500" />
+                  <span className="text-xs font-medium leading-relaxed">
+                    {language === 'th'
+                      ? 'พิมพ์รหัสครุภัณฑ์ หรือชื่อครุภัณฑ์เพื่อเริ่มค้นหา'
+                      : 'Type an asset code or name to start searching.'}
+                  </span>
+                </div>
+              ) : searchLoading ? (
+                <div className="flex flex-col items-center justify-center py-8 text-slate-500 gap-2">
+                  <Loader2 size={20} className="animate-spin text-blue-400" />
+                  <span className="text-xs font-medium">
+                    {language === 'th' ? 'กำลังค้นหาครุภัณฑ์...' : 'Searching assets...'}
+                  </span>
+                </div>
+              ) : searchFailed ? (
+                <div className="flex flex-col items-center justify-center py-8 text-slate-500 gap-2 px-6 text-center">
+                  <AlertTriangle size={20} className="text-amber-400" />
+                  <span className="text-xs font-medium leading-relaxed">
+                    {language === 'th'
+                      ? 'ไม่สามารถเชื่อมต่อกับระบบทะเบียนครุภัณฑ์ได้ กรุณาลองใหม่อีกครั้ง'
+                      : 'Could not reach the asset registry. Please try again.'}
+                  </span>
+                </div>
+              ) : searchResults.length > 0 ? (
                 <>
                   <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-3 py-1.5 select-none">
-                    {language === 'th' ? 'หมวดหมู่ด่วน' : 'Popular Categories'}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 p-1.5">
-                    {['Manuals', 'Avionics', 'Safety', 'Tools'].map((cat, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSearchQuery(cat)}
-                        className="flex items-center gap-2.5 p-2.5 bg-slate-900/40 hover:bg-slate-900 border border-white/5 hover:border-white/10 rounded-xl text-left transition-colors cursor-pointer text-xs font-bold text-slate-300 hover:text-white"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                        <span>{cat}</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-3 py-1.5 mt-3 select-none">
-                    {language === 'th' ? 'สินทรัพย์ยอดนิยม' : 'Sample Assets'}
+                    {language === 'th'
+                      ? `ผลการค้นหา (${searchResults.length})`
+                      : `Search Results (${searchResults.length})`}
                   </div>
                   <div className="space-y-1">
-                    {mockAssets.slice(0, 3).map((asset) => (
-                      <button
+                    {searchResults.map((asset) => (
+                      <div
                         key={asset.id}
-                        onClick={() => setSearchQuery(asset.name)}
-                        className="flex items-center justify-between w-full p-2.5 hover:bg-slate-900/60 rounded-xl text-left transition-colors cursor-pointer border border-transparent hover:border-white/5"
+                        className="flex items-center justify-between w-full p-2.5 bg-slate-900/30 border border-white/5 rounded-xl"
                       >
-                        <div className="flex flex-col">
-                          <span className="text-xs font-bold text-slate-200">{asset.name}</span>
-                          <span className="text-[10px] text-slate-500 font-mono mt-0.5">{asset.code}</span>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-bold text-slate-200 truncate">{asset.name}</span>
+                          <span className="text-[10px] text-slate-500 font-mono mt-0.5">{asset.assetCode}</span>
                         </div>
                         {getStatusBadge(asset.status)}
-                      </button>
+                      </div>
                     ))}
                   </div>
                 </>
               ) : (
-                <>
-                  <div className="text-[9px] font-bold text-slate-500 uppercase tracking-widest px-3 py-1.5 select-none">
-                    {language === 'th' ? `ผลการค้นหา (${filteredAssets.length})` : `Search Results (${filteredAssets.length})`}
-                  </div>
-                  {filteredAssets.length > 0 ? (
-                    <div className="space-y-1">
-                      {filteredAssets.map((asset) => (
-                        <div
-                          key={asset.id}
-                          className="flex items-center justify-between w-full p-2.5 bg-slate-900/30 border border-white/5 rounded-xl"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-xs font-bold text-slate-200">{asset.name}</span>
-                            <span className="text-[10px] text-slate-500 font-mono mt-0.5">{asset.code}</span>
-                          </div>
-                          {getStatusBadge(asset.status)}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-8 text-slate-500 gap-2">
-                      <AlertTriangle size={20} className="text-slate-500" />
-                      <span className="text-xs font-medium">
-                        {language === 'th' ? 'ไม่พบสินทรัพย์ที่ค้นหา' : 'No matching assets found'}
-                      </span>
-                    </div>
-                  )}
-                </>
+                <div className="flex flex-col items-center justify-center py-8 text-slate-500 gap-2">
+                  <AlertTriangle size={20} className="text-slate-500" />
+                  <span className="text-xs font-medium">
+                    {language === 'th' ? 'ไม่พบครุภัณฑ์' : 'No matching assets found'}
+                  </span>
+                </div>
               )}
             </div>
 
@@ -751,13 +784,7 @@ export default function Header() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-1">
-                          <div className="space-y-1">
-                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Employee ID</span>
-                            <span className="text-xs font-mono font-bold text-white bg-slate-950/30 px-2 py-1 rounded border border-white/5 inline-block">
-                              {scannedAsset.currentHolder.employeeCode}
-                            </span>
-                          </div>
+                        <div className="grid grid-cols-1 gap-4 pt-1">
                           <div className="space-y-1">
                             <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Department</span>
                             <span className="text-xs font-bold text-slate-350 block truncate" title={scannedAsset.currentHolder.department}>

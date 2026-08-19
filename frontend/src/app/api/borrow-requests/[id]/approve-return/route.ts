@@ -3,7 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
 import { sendReturnStatusNotification } from '@/lib/email';
-import { BorrowStatus, AssetStatus, Role, ConditionStatus } from '@prisma/client';
+import { getSystemSettings, assetStatusAfterReturn } from '@/lib/settings';
+import { BorrowStatus, Role } from '@prisma/client';
 
 
 type Params = { params: Promise<{ id: string }> };
@@ -38,14 +39,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'ไม่พบข้อมูลบันทึกสภาพการส่งคืนสินทรัพย์' }, { status: 400 });
     }
 
+    const settings = await getSystemSettings();
+
     // Use Prisma transaction
     const result = await prisma.$transaction(async (tx) => {
-      let nextAssetStatus: AssetStatus = AssetStatus.AVAILABLE;
-      if (borrowRequest.assetReturn?.condition === ConditionStatus.DAMAGED) {
-        nextAssetStatus = AssetStatus.MAINTENANCE;
-      } else if (borrowRequest.assetReturn?.condition === ConditionStatus.LOST) {
-        nextAssetStatus = AssetStatus.LOST;
-      }
+      const nextAssetStatus = assetStatusAfterReturn(
+        borrowRequest.assetReturn!.condition,
+        settings.autoMaintenanceOnDamaged,
+      );
 
       // Update Asset status and release holder
       await tx.asset.update({

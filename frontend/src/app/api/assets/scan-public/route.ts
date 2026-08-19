@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     let cleanCode = code.trim();
     try {
       if (cleanCode.includes('code=')) {
-        const urlObj = new URL(cleanCode.startsWith('http') ? cleanCode : `http://dummy.com/${cleanCode}`);
+        const urlObj = new URL(cleanCode.startsWith('http') ? cleanCode : `http://example.invalid/${cleanCode}`);
         cleanCode = urlObj.searchParams.get('code') || cleanCode;
       }
     } catch (e) {
@@ -33,15 +33,14 @@ export async function GET(request: NextRequest) {
         ]
       },
       include: {
+        // This endpoint is public: anyone who scans the sticker reaches it
+        // without signing in. Expose only who currently holds the asset and
+        // where they work, never their contact details or employee code.
         currentHolder: {
           select: {
-            id: true,
-            employeeCode: true,
             firstName: true,
             lastName: true,
             department: true,
-            email: true,
-            phone: true,
           }
         },
         borrowRequests: {
@@ -55,7 +54,6 @@ export async function GET(request: NextRequest) {
               select: {
                 firstName: true,
                 lastName: true,
-                employeeCode: true,
                 department: true,
               }
             }
@@ -67,7 +65,7 @@ export async function GET(request: NextRequest) {
     if (!asset) {
       return NextResponse.json(
         { message: 'ไม่พบครุภัณฑ์หรือสินทรัพย์นี้ในระบบ / Asset not found' },
-        { status: 444 }
+        { status: 404 }
       );
     }
 

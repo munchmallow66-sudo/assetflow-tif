@@ -11,7 +11,24 @@ export async function GET(request: NextRequest) {
     const user = await getAuthUser(request);
     if (!user) return unauthorized();
 
+    // ?q= powers the header quick search. It is a narrow lookup, so it caps the
+    // result set; without it the endpoint still returns the full registry that
+    // the asset, report and borrow screens rely on.
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get('q')?.trim();
+
     const assets = await prisma.asset.findMany({
+      ...(q
+        ? {
+            where: {
+              OR: [
+                { assetCode: { contains: q, mode: 'insensitive' as const } },
+                { name: { contains: q, mode: 'insensitive' as const } },
+              ],
+            },
+            take: 10,
+          }
+        : {}),
       include: {
         currentHolder: {
           select: {

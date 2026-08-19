@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       prisma.borrowRequest.count({ where: { status: BorrowStatus.PENDING } }),
       prisma.borrowRequest.count({
         where: {
-          status: BorrowStatus.BORROWED,
+          status: { in: [BorrowStatus.BORROWED, BorrowStatus.OVERDUE] },
           expectedReturnDate: { lt: today },
         },
       }),

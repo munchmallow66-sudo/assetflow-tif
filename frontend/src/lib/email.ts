@@ -1,6 +1,42 @@
 import nodemailer from 'nodemailer';
+import { Role } from '@prisma/client';
+import { prisma } from './prisma';
 
-const DEFAULT_TARGET_EMAIL = 'watchara.pho@tif.ac.th';
+/**
+ * Escape a value before it goes into an email body.
+ *
+ * Purpose, condition notes and rejection reasons are free text typed by users
+ * and were previously interpolated into the HTML raw, so anything from a stray
+ * '<' breaking the layout to a planted link was possible.
+ */
+export function escapeHtml(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Who to tell about a request that still needs a decision.
+ *
+ * Read from the database rather than a fixed address, so adding an approver is
+ * an account change rather than a code change.
+ */
+export async function getApproverRecipients(): Promise<string[]> {
+  try {
+    const approvers = await prisma.user.findMany({
+      where: { role: { in: [Role.ADMIN, Role.APPROVER] } },
+      select: { email: true },
+    });
+    return approvers.map((a) => a.email).filter(Boolean);
+  } catch (error) {
+    console.error('[Email Service] Failed to resolve approver recipients:', error);
+    return [];
+  }
+}
 
 export async function sendEmail({
   to,
@@ -8,12 +44,29 @@ export async function sendEmail({
   html,
   text,
 }: {
-  to?: string;
+  to?: string | string[];
   subject: string;
   html: string;
   text?: string;
 }) {
-  const recipient = to || process.env.NOTIFICATION_EMAIL || DEFAULT_TARGET_EMAIL;
+  const requested = (Array.isArray(to) ? to : [to])
+    .map((address) => address?.trim())
+    .filter((address): address is string => Boolean(address));
+
+  // NOTIFICATION_EMAIL is a fallback mailbox, not a default destination: if a
+  // message has real addressees they are used, and if it has none and no
+  // fallback is configured it is dropped rather than sent to whoever used to be
+  // hardcoded here.
+  const recipients = requested.length > 0
+    ? Array.from(new Set(requested))
+    : [process.env.NOTIFICATION_EMAIL].filter((a): a is string => Boolean(a));
+
+  if (recipients.length === 0) {
+    console.warn(`[Email Service] "${subject}" has no recipient and NOTIFICATION_EMAIL is unset; not sending.`);
+    return { success: false, error: 'no recipient' };
+  }
+
+  const recipient = recipients.join(', ');
 
   const host = process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = parseInt(process.env.SMTP_PORT || '587', 10);
@@ -70,18 +123,20 @@ function formatDate(dateVal: Date | string | null | undefined): string {
   });
 }
 
+/** Returns HTML-safe text: every caller drops the result straight into markup. */
 function getBorrowerName(borrower?: any): string {
   if (!borrower) return '-';
   if (borrower.firstName || borrower.lastName) {
-    return `${borrower.firstName || ''} ${borrower.lastName || ''}`.trim();
+    return escapeHtml(`${borrower.firstName || ''} ${borrower.lastName || ''}`.trim());
   }
-  if (borrower.name) return borrower.name;
+  if (borrower.name) return escapeHtml(borrower.name);
   return '-';
 }
 
+/** Returns HTML-safe text, as above. */
 function getBorrowerCode(borrower?: any): string {
   if (!borrower) return '-';
-  return borrower.employeeCode || borrower.employeeId || borrower.id || '-';
+  return escapeHtml(borrower.employeeCode || borrower.employeeId || borrower.id || '-');
 }
 
 function emailWrapper(title: string, contentHtml: string): string {
@@ -91,7 +146,7 @@ function emailWrapper(title: string, contentHtml: string): string {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>${title}</title>
+      <title>${escapeHtml(title)}</title>
       <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
         .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
@@ -133,7 +188,7 @@ export async function sendBorrowRequestNotification(borrowRequest: {
   expectedReturnDate: Date | string;
   purpose?: string | null;
 }) {
-  const subject = `[TIF AssetFlow] แจ้งเตือน: มีรายการขอยืมสินทรัพย์ใหม่ (${borrowRequest.requestNo})`;
+  const subject = `[TIF AssetFlow] แจ้งเตือน: มีรายการขอยืมสินทรัพย์ใหม่ (${escapeHtml(borrowRequest.requestNo)})`;
 
   const html = emailWrapper(
     'มีรายการขอยืมสินทรัพย์ใหม่',
@@ -145,7 +200,7 @@ export async function sendBorrowRequestNotification(borrowRequest: {
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">เลขที่คำขอ:</td>
-            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${borrowRequest.requestNo}</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(borrowRequest.requestNo)}</td>
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">ผู้ขอยืม:</td>
@@ -153,7 +208,7 @@ export async function sendBorrowRequestNotification(borrowRequest: {
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">สินทรัพย์:</td>
-            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${borrowRequest.asset?.name || '-'} [${borrowRequest.asset?.assetCode || '-'}]</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(borrowRequest.asset?.name || '-')} [${escapeHtml(borrowRequest.asset?.assetCode || '-')}]</td>
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">วันที่ยืม:</td>
@@ -165,7 +220,7 @@ export async function sendBorrowRequestNotification(borrowRequest: {
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">วัตถุประสงค์:</td>
-            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${borrowRequest.purpose || '-'}</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(borrowRequest.purpose || '-')}</td>
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">สถานะ:</td>
@@ -176,7 +231,9 @@ export async function sendBorrowRequestNotification(borrowRequest: {
     `
   );
 
-  return sendEmail({ subject, html });
+  // A new request needs a decision, so it goes to the people who can make
+  // one, not to a single fixed mailbox.
+  return sendEmail({ to: await getApproverRecipients(), subject, html });
 }
 
 // 2. Notification when an Asset Return is submitted
@@ -189,7 +246,7 @@ export async function sendReturnRequestNotification(returnRecord: {
 }) {
   const requestNo = returnRecord.borrowRequest?.requestNo || '-';
   const borrower = returnRecord.borrowRequest?.borrower;
-  const subject = `[TIF AssetFlow] แจ้งเตือน: มีการส่งคืนสินทรัพย์ (${requestNo})`;
+  const subject = `[TIF AssetFlow] แจ้งเตือน: มีการส่งคืนสินทรัพย์ (${escapeHtml(requestNo)})`;
 
   const html = emailWrapper(
     'มีการส่งคืนสินทรัพย์',
@@ -201,7 +258,7 @@ export async function sendReturnRequestNotification(returnRecord: {
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">เลขที่คำขอ:</td>
-            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${requestNo}</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(requestNo)}</td>
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">ผู้คืน/ผู้ยืม:</td>
@@ -209,17 +266,17 @@ export async function sendReturnRequestNotification(returnRecord: {
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">สินทรัพย์:</td>
-            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${returnRecord.asset?.name || '-'} [${returnRecord.asset?.assetCode || '-'}]</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(returnRecord.asset?.name || '-')} [${escapeHtml(returnRecord.asset?.assetCode || '-')}]</td>
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">สภาพสินทรัพย์ที่คืน:</td>
-            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${returnRecord.condition || 'NORMAL'}</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(returnRecord.condition || 'NORMAL')}</td>
           </tr>
           ${
             returnRecord.conditionNote
               ? `<tr>
                   <td style="padding: 6px 0; color: #64748b; font-weight: 500;">หมายเหตุสภาพ:</td>
-                  <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${returnRecord.conditionNote}</td>
+                  <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(returnRecord.conditionNote)}</td>
                 </tr>`
               : ''
           }
@@ -232,7 +289,8 @@ export async function sendReturnRequestNotification(returnRecord: {
     `
   );
 
-  return sendEmail({ subject, html });
+  // A submitted return is also awaiting approval.
+  return sendEmail({ to: await getApproverRecipients(), subject, html });
 }
 
 // 3. Notification when a Borrow Request status changes (Approve / Reject)
@@ -250,7 +308,7 @@ export async function sendBorrowStatusNotification(
   const borrower = borrowRequest.borrower;
   const subject = `[TIF AssetFlow] แจ้งเตือน: ${
     isApproved ? 'อนุมัติการยืมสินทรัพย์' : 'ปฏิเสธคำขอยืมสินทรัพย์'
-  } (${borrowRequest.requestNo})`;
+  } (${escapeHtml(borrowRequest.requestNo)})`;
 
   const html = emailWrapper(
     isApproved ? 'อนุมัติการยืมสินทรัพย์' : 'ปฏิเสธคำขอยืมสินทรัพย์',
@@ -264,7 +322,7 @@ export async function sendBorrowStatusNotification(
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">เลขที่คำขอ:</td>
-            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${borrowRequest.requestNo}</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(borrowRequest.requestNo)}</td>
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">ผู้ขอยืม:</td>
@@ -272,7 +330,7 @@ export async function sendBorrowStatusNotification(
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">สินทรัพย์:</td>
-            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${borrowRequest.asset?.name || '-'} [${borrowRequest.asset?.assetCode || '-'}]</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(borrowRequest.asset?.name || '-')} [${escapeHtml(borrowRequest.asset?.assetCode || '-')}]</td>
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">สถานะใหม่:</td>
@@ -286,7 +344,7 @@ export async function sendBorrowStatusNotification(
             !isApproved && borrowRequest.rejectedReason
               ? `<tr>
                   <td style="padding: 6px 0; color: #64748b; font-weight: 500;">เหตุผลที่ปฏิเสธ:</td>
-                  <td style="padding: 6px 0; color: #991b1b; font-weight: 600; text-align: right;">${borrowRequest.rejectedReason}</td>
+                  <td style="padding: 6px 0; color: #991b1b; font-weight: 600; text-align: right;">${escapeHtml(borrowRequest.rejectedReason)}</td>
                 </tr>`
               : ''
           }
@@ -295,7 +353,8 @@ export async function sendBorrowStatusNotification(
     `
   );
 
-  return sendEmail({ subject, html });
+  // The outcome concerns the person who asked, so it goes to them.
+  return sendEmail({ to: borrower?.email, subject, html });
 }
 
 // 4. Notification when a Return Status changes (Approve / Reject Return)
@@ -312,7 +371,7 @@ export async function sendReturnStatusNotification(
   const borrower = borrowRequest.borrower;
   const subject = `[TIF AssetFlow] แจ้งเตือน: ${
     isApproved ? 'อนุมัติการคืนสินทรัพย์' : 'ปฏิเสธการคืนสินทรัพย์'
-  } (${borrowRequest.requestNo})`;
+  } (${escapeHtml(borrowRequest.requestNo)})`;
 
   const html = emailWrapper(
     isApproved ? 'อนุมัติการคืนสินทรัพย์' : 'ปฏิเสธการคืนสินทรัพย์',
@@ -326,7 +385,7 @@ export async function sendReturnStatusNotification(
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">เลขที่คำขอ:</td>
-            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${borrowRequest.requestNo}</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(borrowRequest.requestNo)}</td>
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">ผู้คืน:</td>
@@ -334,7 +393,7 @@ export async function sendReturnStatusNotification(
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">สินทรัพย์:</td>
-            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${borrowRequest.asset?.name || '-'} [${borrowRequest.asset?.assetCode || '-'}]</td>
+            <td style="padding: 6px 0; color: #0f172a; font-weight: 600; text-align: right;">${escapeHtml(borrowRequest.asset?.name || '-')} [${escapeHtml(borrowRequest.asset?.assetCode || '-')}]</td>
           </tr>
           <tr>
             <td style="padding: 6px 0; color: #64748b; font-weight: 500;">สถานะ:</td>
@@ -349,5 +408,6 @@ export async function sendReturnStatusNotification(
     `
   );
 
-  return sendEmail({ subject, html });
+  // As above: the borrower is the one waiting on this answer.
+  return sendEmail({ to: borrower?.email, subject, html });
 }

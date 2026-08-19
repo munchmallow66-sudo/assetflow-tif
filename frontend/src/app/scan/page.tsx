@@ -40,7 +40,6 @@ interface BorrowRequestInfo {
   borrower?: {
     firstName: string;
     lastName: string;
-    employeeCode: string;
     department: string;
   };
 }
@@ -59,13 +58,9 @@ interface AssetScanData {
   status: 'AVAILABLE' | 'BORROWED' | 'MAINTENANCE' | 'LOST' | 'RETIRED';
   notes?: string;
   currentHolder?: {
-    id?: string;
-    employeeCode: string;
     firstName: string;
     lastName: string;
     department: string;
-    email?: string;
-    phone?: string;
   } | null;
   borrowRequests?: BorrowRequestInfo[];
 }
@@ -331,25 +326,6 @@ function PublicScanContent() {
                           {asset.currentHolder?.department}
                         </p>
                       </div>
-                    </div>
-
-                    <div className="pt-2 space-y-1.5 text-xs text-slate-300 font-mono border-t border-slate-800">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500">{language === 'th' ? 'รหัสพนักงาน:' : 'Employee Code:'}</span>
-                        <span className="font-bold text-slate-200">{asset.currentHolder?.employeeCode || '-'}</span>
-                      </div>
-                      {asset.currentHolder?.email && (
-                        <div className="flex justify-between">
-                          <span className="text-slate-500">{language === 'th' ? 'อีเมล:' : 'Email:'}</span>
-                          <span className="text-slate-300">{asset.currentHolder.email}</span>
-                        </div>
-                      )}
-                      {asset.currentHolder?.phone && (
-                        <div className="flex justify-between">
-                          <span className="text-slate-500">{language === 'th' ? 'เบอร์โทรศัพท์:' : 'Phone:'}</span>
-                          <span className="text-slate-300">{asset.currentHolder.phone}</span>
-                        </div>
-                      )}
                     </div>
                   </div>
 
