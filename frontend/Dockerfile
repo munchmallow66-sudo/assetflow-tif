@@ -7,8 +7,10 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm ci
+# Install dependencies. npm install --legacy-peer-deps matches .github/workflows
+# and vercel.json; npm ci cannot be used because the lockfile omits the Linux
+# variants of @tailwindcss/oxide's optional wasm dependencies.
+RUN npm install --legacy-peer-deps
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
@@ -19,7 +21,13 @@ COPY . .
 # Generate Prisma Client
 RUN npx prisma generate
 
-# Build Next.js
+# Build Next.js.
+# next build imports the API route modules to collect page data, and
+# src/lib/prisma.ts throws unless DATABASE_URL is set. This is a build-time
+# placeholder only; it stays in the builder stage and never reaches the runner,
+# which receives the real value from the environment at run time.
+ARG DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ENV DATABASE_URL=${DATABASE_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
