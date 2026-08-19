@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { signToken } from '@/lib/auth';
+import { signToken, setAuthCookie } from '@/lib/auth';
 import { loginSchema, formatZodError } from '@/lib/validations';
 import * as bcrypt from 'bcryptjs';
 import { rateLimit, getClientIp } from '@/lib/rate-limit';
@@ -75,10 +75,11 @@ export async function POST(request: NextRequest) {
     });
 
     const { password, ...result } = user;
-    return NextResponse.json({
-      accessToken,
-      user: result,
-    });
+
+    // The token is handed to the browser only as an httpOnly cookie. It is
+    // deliberately absent from the body: nothing on the page should be able to
+    // read, store, or forward the credential.
+    return setAuthCookie(NextResponse.json({ user: result }), accessToken);
   } catch (error: any) {
     console.error('Login error:', error);
     return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาด' }, { status: 500 });

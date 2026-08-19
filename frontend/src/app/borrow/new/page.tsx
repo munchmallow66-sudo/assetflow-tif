@@ -70,9 +70,9 @@ export default function NewBorrowPage() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
-  const storedUserJson = typeof window !== 'undefined' ? localStorage.getItem('tif_user') : null;
-  const storedUser = storedUserJson ? JSON.parse(storedUserJson) : null;
-  const currentUser = user || storedUser;
+  // The session is httpOnly now, so there is no cached copy to fall back on:
+  // AuthProvider is the single source, fed by /api/auth/me.
+  const currentUser = user;
   const userRoleUpper = currentUser?.role ? String(currentUser.role).toUpperCase() : '';
   const isAdminOnly = userRoleUpper === 'ADMIN';
 

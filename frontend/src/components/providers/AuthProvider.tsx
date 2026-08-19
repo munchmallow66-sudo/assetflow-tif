@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/api';
 
@@ -23,125 +23,127 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/** Public paths that never need a session. Kept in step with proxy.ts. */
+const PUBLIC_PATHS = ['/', '/login'];
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.includes(pathname) || pathname.startsWith('/scan');
+}
+
+/**
+ * Where to land after signing in.
+ *
+ * proxy.ts records the page that was refused as ?from=. Only a same-site
+ * absolute path is honoured; a value starting with // or a scheme would be an
+ * open redirect, so anything else falls back to the dashboard.
+ */
+function redirectTargetAfterLogin(): string {
+  if (typeof window === 'undefined') return '/dashboard';
+  const from = new URLSearchParams(window.location.search).get('from');
+  if (!from || !from.startsWith('/') || from.startsWith('//')) return '/dashboard';
+  return from;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    const initAuth = async () => {
-      const storedToken = localStorage.getItem('tif_token');
-      const storedUser = localStorage.getItem('tif_user');
-
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
-        try {
-          const res = await api.get('/auth/me');
-          setUser(res.data);
-          localStorage.setItem('tif_user', JSON.stringify(res.data));
-        } catch {
-          localStorage.removeItem('tif_token');
-          localStorage.removeItem('tif_user');
-          setUser(null);
-          setToken(null);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setLoading(false);
-      }
-    };
-
-    initAuth();
+  /**
+   * The server is the only source of truth for who is signed in.
+   *
+   * There is no token to inspect on this side any more: the cookie is httpOnly,
+   * so the session is confirmed by asking /api/auth/me, which reads it. A 401
+   * simply means no session.
+   */
+  const loadUser = useCallback(async () => {
+    try {
+      const res = await api.get('/auth/me');
+      setUser(res.data);
+    } catch {
+      setUser(null);
+    }
   }, []);
 
-  // Route guarding based on roles
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const res = await api.get('/auth/me');
+        if (active) setUser(res.data);
+      } catch {
+        if (active) setUser(null);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  /**
+   * Client-side redirect for the signed-out case only.
+   *
+   * proxy.ts already refuses to serve a protected page without a session,
+   * so this is a fallback for a session that lapses while the tab is open, not
+   * the primary guard. Role checks are not repeated here: the middleware makes
+   * that decision before any page is sent.
+   */
   useEffect(() => {
     if (loading) return;
-
-    const isPublicPath = pathname === '/login' || pathname === '/' || pathname.startsWith('/scan');
-
-    if (!token && !isPublicPath) {
-      router.push('/login');
-    } else if (token && isPublicPath) {
-      router.push('/dashboard');
-    } else if (token && user) {
-      // Role guards for frontend routes
-      if (pathname.startsWith('/users') && user.role !== 'ADMIN') {
-        router.push('/dashboard');
-      }
-      if (
-        pathname.startsWith('/employees') &&
-        !['ADMIN', 'APPROVER', 'STAFF', 'VIEWER'].includes(user.role)
-      ) {
-        router.push('/dashboard');
-      }
-      if (
-        pathname.startsWith('/returns/new') &&
-        user.role !== 'ADMIN' &&
-        user.role !== 'STAFF' &&
-        user.role !== 'APPROVER'
-      ) {
-        router.push('/dashboard');
-      }
-      if (pathname.startsWith('/borrow/pending') && user.role !== 'ADMIN' && user.role !== 'APPROVER') {
-        router.push('/dashboard');
-      }
+    if (!user && !isPublicPath(pathname)) {
+      router.replace('/login');
     }
-  }, [pathname, token, user, loading, router]);
+  }, [pathname, user, loading, router]);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
+      // The response carries the profile; the token comes back as a Set-Cookie
+      // the browser stores and this code never sees.
       const res = await api.post('/auth/login', { email, password });
-      const { accessToken, user: userData } = res.data;
-
-      localStorage.setItem('tif_token', accessToken);
-      localStorage.setItem('tif_user', JSON.stringify(userData));
-
-      setToken(accessToken);
-      setUser(userData);
+      setUser(res.data.user);
       setLoading(false);
-
-      router.push('/dashboard');
+      router.push(redirectTargetAfterLogin());
+      router.refresh();
     } catch (error: any) {
       setLoading(false);
       throw error.response?.data?.message || 'การเข้าสู่ระบบล้มเหลว';
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('tif_token');
-    localStorage.removeItem('tif_user');
-    setToken(null);
-    setUser(null);
-    router.push('/login');
-  };
-
-  const checkAuth = async () => {
+  const logout = async () => {
     try {
-      const res = await api.get('/auth/me');
-      setUser(res.data);
-      localStorage.setItem('tif_user', JSON.stringify(res.data));
-    } catch {
-      logout();
+      // Only the server can expire an httpOnly cookie, so signing out is a
+      // request, not a local state change.
+      await api.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout request failed:', error);
+    } finally {
+      setUser(null);
+      router.push('/login');
+      router.refresh();
     }
   };
 
+  const checkAuth = async () => {
+    await loadUser();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );
