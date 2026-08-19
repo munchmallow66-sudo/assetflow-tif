@@ -9,7 +9,6 @@ import { useToast } from '@/components/providers/ToastProvider';
 import PageTransition from '@/components/common/PageTransition';
 import { Skeleton } from '@/components/common/Skeleton';
 import {
-  Trash2,
   Edit2,
   Phone,
   Briefcase,
@@ -29,6 +28,7 @@ import {
   Check,
   Save,
   PhoneCall,
+  UserX,
 } from 'lucide-react';
 
 interface EmployeeData {
@@ -39,6 +39,7 @@ interface EmployeeData {
   department: string;
   email: string;
   phone?: string | null;
+  isActive: boolean;
 }
 
 export default function EmployeesPage() {
@@ -55,6 +56,9 @@ export default function EmployeesPage() {
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [mounted, setMounted] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  // Deactivated staff are hidden by default; their borrowing history is
+  // unaffected either way, it does not read this list.
+  const [showInactive, setShowInactive] = useState(false);
 
   // Modal Dialog State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -74,7 +78,7 @@ export default function EmployeesPage() {
   const fetchEmployees = async (isManualRefresh = false) => {
     if (isManualRefresh) setRefreshing(true);
     try {
-      const res = await api.get('/employees');
+      const res = await api.get(showInactive ? '/employees?includeInactive=true' : '/employees');
       setEmployees(res.data);
       if (isManualRefresh) {
         toast.success(
@@ -97,7 +101,8 @@ export default function EmployeesPage() {
   useEffect(() => {
     setMounted(true);
     fetchEmployees();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showInactive]);
 
   // Keyboard escape handler for closing modal
   useEffect(() => {
@@ -233,13 +238,13 @@ export default function EmployeesPage() {
     }
   };
 
-  // Delete
-  const handleDelete = async (id: string, name: string) => {
+  // Deactivate. The employee record and their borrowing history are kept.
+  const handleDeactivate = async (id: string, name: string) => {
     if (
       !confirm(
         language === 'th'
-          ? `คุณแน่ใจหรือไม่ที่จะลบรายชื่อพนักงาน: ${name}?`
-          : `Are you sure you want to delete employee: ${name}?`
+          ? `ยืนยันปิดการใช้งานพนักงาน: ${name}? ข้อมูลพนักงานและประวัติการยืม-คืนจะยังคงอยู่ในระบบ`
+          : `Deactivate employee ${name}? Their record and borrowing history stay in the system.`
       )
     )
       return;
@@ -256,9 +261,9 @@ export default function EmployeesPage() {
       fetchEmployees();
     } catch (err: any) {
       toast.error(
-        language === 'th' ? 'การลบล้มเหลว' : 'Delete Failed',
+        language === 'th' ? 'ดำเนินการไม่สำเร็จ' : 'Action Failed',
         err.response?.data?.message ||
-          (language === 'th' ? 'ไม่สามารถลบข้อมูลพนักงานได้' : 'Cannot delete employee')
+          (language === 'th' ? 'ไม่สามารถปิดการใช้งานพนักงานท่านนี้ได้' : 'Cannot deactivate this employee')
       );
     }
   };
@@ -432,6 +437,19 @@ export default function EmployeesPage() {
             </button>
           )}
 
+          <button
+            onClick={() => setShowInactive((prev) => !prev)}
+            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition-colors cursor-pointer ${
+              showInactive
+                ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/50'
+                : 'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+            title={language === 'th' ? 'สลับการแสดงพนักงานที่ปิดใช้งาน' : 'Toggle deactivated employees'}
+          >
+            <UserX size={14} />
+            <span>{language === 'th' ? 'แสดงผู้ที่ปิดใช้งาน' : 'Show deactivated'}</span>
+          </button>
+
           <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
 
           {/* View Mode Switcher */}
@@ -544,6 +562,11 @@ export default function EmployeesPage() {
                           <span className="font-bold text-slate-800 dark:text-slate-100">
                             {emp.firstName} {emp.lastName}
                           </span>
+                          {!emp.isActive && (
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 px-2 py-0.5 rounded-md shrink-0">
+                              {language === 'th' ? 'ปิดใช้งาน' : 'Deactivated'}
+                            </span>
+                          )}
                         </div>
                       </td>
 
@@ -593,11 +616,11 @@ export default function EmployeesPage() {
                               <Edit2 size={14} />
                             </button>
                             <button
-                              onClick={() => handleDelete(emp.id, `${emp.firstName} ${emp.lastName}`)}
+                              onClick={() => handleDeactivate(emp.id, `${emp.firstName} ${emp.lastName}`)}
                               className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-rose-500 hover:text-rose-600 text-slate-500 transition-colors cursor-pointer"
-                              title="Delete Employee"
+                              title={language === 'th' ? 'ปิดการใช้งานพนักงาน' : 'Deactivate employee'}
                             >
-                              <Trash2 size={14} />
+                              <UserX size={14} />
                             </button>
                           </div>
                         </td>
@@ -637,10 +660,11 @@ export default function EmployeesPage() {
                           <Edit2 size={13} />
                         </button>
                         <button
-                          onClick={() => handleDelete(emp.id, `${emp.firstName} ${emp.lastName}`)}
+                          onClick={() => handleDeactivate(emp.id, `${emp.firstName} ${emp.lastName}`)}
                           className="p-1 border border-slate-200 dark:border-slate-700 hover:border-rose-500 hover:text-rose-600 text-slate-400 rounded-lg transition-colors cursor-pointer"
+                          title={language === 'th' ? 'ปิดการใช้งานพนักงาน' : 'Deactivate employee'}
                         >
-                          <Trash2 size={13} />
+                          <UserX size={13} />
                         </button>
                       </div>
                     )}
@@ -655,6 +679,11 @@ export default function EmployeesPage() {
                       <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 leading-snug truncate">
                         {emp.firstName} {emp.lastName}
                       </h4>
+                      {!emp.isActive && (
+                        <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 px-2 py-0.5 rounded-md">
+                          {language === 'th' ? 'ปิดใช้งาน' : 'Deactivated'}
+                        </span>
+                      )}
                       <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-0.5 flex items-center gap-1 truncate">
                         <Briefcase size={11} className="text-sky-500 shrink-0" />
                         <span className="truncate">{emp.department}</span>

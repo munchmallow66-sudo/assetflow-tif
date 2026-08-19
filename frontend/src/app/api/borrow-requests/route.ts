@@ -67,6 +67,11 @@ export async function POST(request: NextRequest) {
           message: 'ไม่พบข้อมูลพนักงานที่ระบุสำหรับยืมแทน',
         }, { status: 400 });
       }
+      if (!targetEmp.isActive) {
+        return NextResponse.json({
+          message: 'ไม่สามารถทำรายการแทนพนักงานท่านนี้ได้ เนื่องจากบัญชีพนักงานถูกปิดการใช้งานแล้ว',
+        }, { status: 400 });
+      }
       finalBorrowerId = dto.targetBorrowerId;
     } else {
       if (!user.employeeId) {

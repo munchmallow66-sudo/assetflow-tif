@@ -13,7 +13,16 @@ export async function GET(request: NextRequest) {
     const roleError = requireRoles(user, Role.ADMIN, Role.APPROVER, Role.STAFF, Role.VIEWER);
     if (roleError) return roleError;
 
+    // Deactivated employees are hidden by default so they cannot be picked as
+    // a borrower. Callers that legitimately need them - the employee admin
+    // screen and the history report selector - opt in explicitly. Borrowing
+    // history is never filtered: it reads the employee through its own
+    // relation, not through this list.
+    const { searchParams } = new URL(request.url);
+    const includeInactive = searchParams.get('includeInactive') === 'true';
+
     const employees = await prisma.employee.findMany({
+      where: includeInactive ? {} : { isActive: true },
       orderBy: { employeeCode: 'asc' },
     });
     return NextResponse.json(employees);

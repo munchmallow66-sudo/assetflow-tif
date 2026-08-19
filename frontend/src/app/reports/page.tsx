@@ -55,7 +55,7 @@ function ReportsContent() {
           api.get('/reports/borrowed-assets'),
           api.get('/reports/overdue-assets'),
           api.get('/reports/damaged-assets'),
-          api.get('/employees'),
+          api.get('/employees?includeInactive=true'),
           api.get('/assets'),
         ]);
         
@@ -480,6 +480,7 @@ function ReportsContent() {
                     {employees.map((emp) => (
                       <option key={emp.id} value={emp.id}>
                         [{emp.employeeCode}] {emp.firstName} {emp.lastName} ({emp.department})
+                        {emp.isActive === false ? (isEN ? ' - deactivated' : ' - ปิดใช้งานแล้ว') : ''}
                       </option>
                     ))}
                   </select>
