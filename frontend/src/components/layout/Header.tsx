@@ -113,7 +113,7 @@ export default function Header() {
     try {
       const res = await fetch(`/api/assets/scan-public?code=${encodeURIComponent(decodedText)}`);
       if (!res.ok) {
-        if (res.status === 444) {
+        if (res.status === 404) {
           setScanError(language === 'th' ? 'ไม่พบข้อมูลครุภัณฑ์หรือรหัสที่สแกนในระบบ' : 'No asset matches this scanned code.');
         } else {
           setScanError(language === 'th' ? 'เกิดข้อผิดพลาดในการตรวจสอบข้อมูลครุภัณฑ์' : 'Error checking asset info.');
@@ -751,13 +751,7 @@ export default function Header() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 pt-1">
-                          <div className="space-y-1">
-                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Employee ID</span>
-                            <span className="text-xs font-mono font-bold text-white bg-slate-950/30 px-2 py-1 rounded border border-white/5 inline-block">
-                              {scannedAsset.currentHolder.employeeCode}
-                            </span>
-                          </div>
+                        <div className="grid grid-cols-1 gap-4 pt-1">
                           <div className="space-y-1">
                             <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Department</span>
                             <span className="text-xs font-bold text-slate-350 block truncate" title={scannedAsset.currentHolder.department}>
