@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/api';
+import { DEFAULT_REDIRECT, redirectTargetOrDefault } from '@/lib/redirect';
 
 export interface User {
   id: string;
@@ -41,15 +42,12 @@ function isPublicPath(pathname: string): boolean {
 /**
  * Where to land after signing in.
  *
- * proxy.ts records the page that was refused as ?from=. Only a same-site
- * absolute path is honoured; a value starting with // or a scheme would be an
- * open redirect, so anything else falls back to the dashboard.
+ * proxy.ts records the page that was refused as ?from=. It is re-validated
+ * here because it has been through the URL since: see lib/redirect.
  */
 function redirectTargetAfterLogin(): string {
-  if (typeof window === 'undefined') return '/dashboard';
-  const from = new URLSearchParams(window.location.search).get('from');
-  if (!from || !from.startsWith('/') || from.startsWith('//')) return '/dashboard';
-  return from;
+  if (typeof window === 'undefined') return DEFAULT_REDIRECT;
+  return redirectTargetOrDefault(new URLSearchParams(window.location.search).get('from'));
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

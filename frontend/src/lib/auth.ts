@@ -1,4 +1,4 @@
-import { SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify, decodeJwt } from 'jose';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 // Type-only: proxy.ts runs on the edge runtime, where the Prisma client
@@ -58,9 +58,6 @@ export async function verifyToken(token: string): Promise<JwtPayload | null> {
 /** Name of the httpOnly session cookie. Never readable from document.cookie. */
 export const AUTH_COOKIE = 'tif_session';
 
-/** Seconds the session cookie survives. Kept in step with JWT_EXPIRES_IN's default. */
-const COOKIE_MAX_AGE = 60 * 60 * 24;
-
 /**
  * The only place a request's identity is read.
  *
@@ -75,20 +72,51 @@ export async function getAuthUser(request: NextRequest): Promise<JwtPayload | nu
   return verifyToken(token);
 }
 
-export function authCookieOptions(maxAge: number = COOKIE_MAX_AGE) {
+/**
+ * Cookie attributes. maxAge is left to the caller because there is no default
+ * lifetime to fall back on: how long the cookie lives is decided by the token
+ * it carries. Omitting it yields a session cookie, which the browser drops when
+ * it closes.
+ */
+export function authCookieOptions(maxAge?: number) {
   return {
     httpOnly: true,
     // Plain http in local development would drop a Secure cookie entirely.
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
     path: '/',
-    maxAge,
+    ...(maxAge === undefined ? {} : { maxAge }),
   };
 }
 
-/** Attach a fresh session cookie to a response. */
+/**
+ * Seconds until this token expires, or undefined if it carries no usable exp.
+ *
+ * Read from the token itself rather than from a constant, so JWT_EXPIRES_IN
+ * stays the single thing that decides session length. Decoding without
+ * verifying is fine here: we signed this token moments ago, and the value is
+ * used only to tell the browser when to stop sending it back.
+ */
+function secondsUntilExpiry(token: string): number | undefined {
+  try {
+    const { exp } = decodeJwt(token);
+    if (typeof exp !== 'number') return undefined;
+    const remaining = exp - Math.floor(Date.now() / 1000);
+    return remaining > 0 ? remaining : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Attach a fresh session cookie, expiring exactly when its token does.
+ *
+ * If the lifetime cannot be derived the cookie becomes a session cookie rather
+ * than falling back to some invented duration: outliving the token it holds is
+ * the one behaviour worth ruling out.
+ */
 export function setAuthCookie(response: NextResponse, token: string): NextResponse {
-  response.cookies.set(AUTH_COOKIE, token, authCookieOptions());
+  response.cookies.set(AUTH_COOKIE, token, authCookieOptions(secondsUntilExpiry(token)));
   return response;
 }
 

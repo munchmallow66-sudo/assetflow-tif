@@ -9,6 +9,7 @@ import {
   isSameOrigin,
   requiresCsrfCheck,
 } from '@/lib/csrf';
+import { safeRedirectPath } from '@/lib/redirect';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -104,7 +105,11 @@ export async function proxy(request: NextRequest) {
     // cannot flash on screen ahead of a client-side redirect. An expired token
     // arrives here too, because verifyToken rejects it.
     const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('from', pathname);
+    // Validated on the way out as well as on the way back: the value becomes
+    // attacker-controllable the moment it is in the URL, so neither end trusts
+    // the other to have checked it.
+    const from = safeRedirectPath(pathname);
+    if (from) loginUrl.searchParams.set('from', from);
     response = NextResponse.redirect(loginUrl);
     // Expire the dead cookie so the browser stops replaying it.
     response.cookies.set(AUTH_COOKIE, '', {
