@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import QRScannerModal from '@/components/common/QRScannerModal';
+import { addDays, startOfDayUtc, todayInAppZone } from '@/lib/dates';
 
 const borrowSchema = z.object({
   assetId: z.string().nonempty('กรุณาเลือกสินทรัพย์ที่ต้องการยืม'),
@@ -34,13 +35,14 @@ const borrowSchema = z.object({
   expectedReturnDate: z.string().nonempty('กรุณาระบุวันที่คาดว่าจะส่งคืน'),
   purpose: z.string().nonempty('กรุณาระบุวัตถุประสงค์ในการยืม'),
   signature: z.string().optional(),
-}).refine((data) => {
-  const start = new Date(data.borrowDate);
-  const end = new Date(data.expectedReturnDate);
-  return end >= start;
-}, {
+}).refine((data) => startOfDayUtc(data.expectedReturnDate) >= startOfDayUtc(data.borrowDate), {
   message: 'วันที่ส่งคืนคาดการณ์ ต้องอยู่หลังจากวันที่เริ่มต้นยืม',
   path: ['expectedReturnDate'],
+}).refine((data) => startOfDayUtc(data.borrowDate) >= startOfDayUtc(todayInAppZone()), {
+  // Mirrors createBorrowRequestSchema, so a backdated request is caught here
+  // rather than coming back as a 400 from the server.
+  message: 'วันที่ขอยืมต้องไม่เป็นวันที่ย้อนหลัง',
+  path: ['borrowDate'],
 });
 
 type BorrowForm = z.infer<typeof borrowSchema>;
@@ -85,9 +87,11 @@ export default function NewBorrowPage() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [isCanvasSigned, setIsCanvasSigned] = useState(false);
 
-  // Set default dates
-  const today = new Date().toISOString().split('T')[0];
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  // Same calendar day the server uses, so a request made in the Thai morning is
+  // not treated as backdated while the server clock is still on yesterday.
+  const today = todayInAppZone();
+  // Until settings arrive this matches the schema default for maxBorrowDays.
+  const [maxBorrowDays, setMaxBorrowDays] = useState(7);
 
   const {
     register,
@@ -100,7 +104,7 @@ export default function NewBorrowPage() {
     resolver: zodResolver(borrowSchema),
     defaultValues: {
       borrowDate: today,
-      expectedReturnDate: tomorrow,
+      expectedReturnDate: addDays(today, 7),
     },
   });
 
@@ -115,10 +119,19 @@ export default function NewBorrowPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [assetsRes, empRes] = await Promise.all([
+        const [assetsRes, empRes, settingsRes] = await Promise.all([
           api.get('/assets'),
-          api.get('/employees').catch(() => ({ data: [] }))
+          api.get('/employees').catch(() => ({ data: [] })),
+          api.get('/settings').catch(() => null),
         ]);
+
+        // The borrow window is a setting, so the suggested return date is
+        // derived from it rather than being a fixed "tomorrow".
+        const days = Number(settingsRes?.data?.maxBorrowDays);
+        if (Number.isFinite(days) && days > 0) {
+          setMaxBorrowDays(days);
+          setValue('expectedReturnDate', addDays(today, days));
+        }
         const available = assetsRes.data.filter((a: any) => a.status === 'AVAILABLE');
         setAssets(available);
         setEmployees(empRes.data || []);
@@ -141,7 +154,7 @@ export default function NewBorrowPage() {
       }
     };
     fetchData();
-  }, [setValue, language]);
+  }, [setValue, language, today]);
 
   // Make sure canvas sizing and scaling matches screen resolution
   useEffect(() => {
@@ -422,14 +435,22 @@ export default function NewBorrowPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-slate-700 dark:text-slate-300 text-xs font-bold">{language === 'th' ? 'วันที่คาดว่าจะส่งคืน *' : 'Expected Return Date *'}</label>
+                  <label className="block text-slate-700 dark:text-slate-300 text-xs font-bold">
+                    {language === 'th' ? 'วันที่คาดว่าจะส่งคืน *' : 'Expected Return Date *'}
+                    <span className="ml-1.5 font-medium text-slate-400">
+                      {language === 'th'
+                        ? `(ยืมได้สูงสุด ${maxBorrowDays} วัน)`
+                        : `(up to ${maxBorrowDays} days)`}
+                    </span>
+                  </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                       <Calendar size={15} />
                     </div>
                     <input
                       type="date"
-                      min={today}
+                      min={borrowDateVal || today}
+                      max={addDays(borrowDateVal || today, maxBorrowDays)}
                       {...register('expectedReturnDate')}
                       className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-2xl pl-11 pr-4 py-3 text-xs text-slate-700 dark:text-slate-350 focus:outline-none focus:border-sky-500"
                     />

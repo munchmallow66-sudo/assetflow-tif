@@ -4,7 +4,8 @@ import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
 import { createReturnSchema, formatZodError } from '@/lib/validations';
 import { sendReturnRequestNotification } from '@/lib/email';
-import { AssetStatus, BorrowStatus, ConditionStatus, Role } from '@prisma/client';
+import { getSystemSettings, assetStatusAfterReturn } from '@/lib/settings';
+import { BorrowStatus, ConditionStatus, Role } from '@prisma/client';
 
 
 export async function GET(request: NextRequest) {
@@ -74,17 +75,17 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    const settings = await getSystemSettings();
+
     // Execute within transaction
     const result = await prisma.$transaction(async (tx) => {
       const isAdmin = user.role === Role.ADMIN;
 
       if (isAdmin) {
-        let nextAssetStatus: AssetStatus = AssetStatus.AVAILABLE;
-        if (dto.condition === ConditionStatus.DAMAGED) {
-          nextAssetStatus = AssetStatus.MAINTENANCE;
-        } else if (dto.condition === ConditionStatus.LOST) {
-          nextAssetStatus = AssetStatus.LOST;
-        }
+        const nextAssetStatus = assetStatusAfterReturn(
+          dto.condition as ConditionStatus,
+          settings.autoMaintenanceOnDamaged,
+        );
 
         // Update Asset status and release holder
         await tx.asset.update({

@@ -5,28 +5,14 @@ import { requireRoles } from '@/lib/roles';
 import { systemSettingsSchema, formatZodError } from '@/lib/validations';
 import { createAuditLog } from '@/lib/audit-log';
 import { Role } from '@prisma/client';
-
-const SETTINGS_ID = 'default-settings-id';
+import { SETTINGS_ID, getSystemSettings } from '@/lib/settings';
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthUser(request);
     if (!user) return unauthorized();
 
-    // Find settings or create default if not found
-    let settings = await prisma.systemSetting.findUnique({
-      where: { id: SETTINGS_ID },
-    });
-
-    if (!settings) {
-      settings = await prisma.systemSetting.create({
-        data: {
-          id: SETTINGS_ID,
-        },
-      });
-    }
-
-    return NextResponse.json(settings);
+    return NextResponse.json(await getSystemSettings());
   } catch (error: any) {
     console.error('Get settings error:', error);
     return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลตั้งค่า' }, { status: 500 });

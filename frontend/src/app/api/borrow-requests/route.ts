@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
-import { createBorrowRequestSchema, formatZodError } from '@/lib/validations';
+import { createBorrowRequestSchema, borrowWindowError, formatZodError } from '@/lib/validations';
+import { getSystemSettings } from '@/lib/settings';
+import { daysBetween, todayInAppZone } from '@/lib/dates';
+import { Prisma } from '@prisma/client';
 import { createAuditLog } from '@/lib/audit-log';
 import { sendBorrowRequestNotification } from '@/lib/email';
 import { BorrowStatus, AssetStatus, Role } from '@prisma/client';
@@ -92,33 +95,62 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Generate Request Number (REQ-YYYYMMDD-XXXX)
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const dateStr = `${yyyy}${mm}${dd}`;
+    // The borrow window is a policy, so it is read from SystemSetting rather
+    // than hardcoded. The schema has already checked the dates are ordered and
+    // not backdated; this is the part that needs the database.
+    const settings = await getSystemSettings();
+    const requestedDays = daysBetween(dto.borrowDate, dto.expectedReturnDate);
+    const windowError = borrowWindowError(requestedDays, settings.maxBorrowDays);
+    if (windowError) {
+      return NextResponse.json({ message: windowError }, { status: 400 });
+    }
 
-    const count = await prisma.borrowRequest.count({
-      where: { requestNo: { startsWith: `REQ-${dateStr}-` } },
-    });
+    const dateStr = todayInAppZone().replace(/-/g, '');
 
-    const seq = String(count + 1).padStart(4, '0');
-    const requestNo = `REQ-${dateStr}-${seq}`;
+    // REQ-YYYYMMDD-NNNN used to be derived from count() + 1, so two requests
+    // submitted in the same moment computed the same number and the second one
+    // died on the unique index. Take the highest number actually issued today
+    // and retry on P2002, which is the collision this cannot fully prevent.
+    const createWithRequestNo = async (): Promise<Awaited<ReturnType<typeof prisma.borrowRequest.create>>> => {
+      const latest = await prisma.borrowRequest.findFirst({
+        where: { requestNo: { startsWith: `REQ-${dateStr}-` } },
+        orderBy: { requestNo: 'desc' },
+        select: { requestNo: true },
+      });
 
-    const borrowRequest = await prisma.borrowRequest.create({
-      data: {
-        requestNo,
-        borrowerId: finalBorrowerId!,
-        assetId: dto.assetId,
-        borrowDate: new Date(dto.borrowDate),
-        expectedReturnDate: new Date(dto.expectedReturnDate),
-        purpose: dto.purpose,
-        status: BorrowStatus.PENDING,
-        signature: dto.signature || null,
-      },
-      include: { asset: true, borrower: true },
-    });
+      const lastSeq = latest ? parseInt(latest.requestNo.slice(-4), 10) : 0;
+      const seq = String((Number.isNaN(lastSeq) ? 0 : lastSeq) + 1).padStart(4, '0');
+
+      return prisma.borrowRequest.create({
+        data: {
+          requestNo: `REQ-${dateStr}-${seq}`,
+          borrowerId: finalBorrowerId!,
+          assetId: dto.assetId,
+          borrowDate: dto.borrowDate,
+          expectedReturnDate: dto.expectedReturnDate,
+          purpose: dto.purpose,
+          status: BorrowStatus.PENDING,
+          signature: dto.signature || null,
+        },
+        include: { asset: true, borrower: true },
+      });
+    };
+
+    const MAX_ATTEMPTS = 5;
+    let borrowRequest;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        borrowRequest = await createWithRequestNo();
+        break;
+      } catch (error) {
+        const isDuplicateRequestNo =
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002' &&
+          String(error.meta?.target ?? '').includes('requestNo');
+
+        if (!isDuplicateRequestNo || attempt >= MAX_ATTEMPTS) throw error;
+      }
+    }
 
     const auditAction = finalBorrowerId !== user.employeeId ? 'CREATE_BORROW_REQUEST_ON_BEHALF' : 'CREATE_BORROW_REQUEST';
     await createAuditLog(user.sub, auditAction, 'BorrowRequest', borrowRequest.id, null, borrowRequest);

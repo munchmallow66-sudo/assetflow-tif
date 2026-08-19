@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { startOfTodayUtc } from './dates';
 
 // =================== Auth ===================
 
@@ -73,14 +74,38 @@ export const updateUserSchema = z.object({
 
 // =================== Borrow Requests ===================
 
-export const createBorrowRequestSchema = z.object({
-  assetId: z.string().min(1, 'กรุณาระบุสินทรัพย์ที่ต้องการยืม'),
-  targetBorrowerId: z.string().optional(),
-  borrowDate: z.string().min(1, 'กรุณาระบุวันที่ขอยืม'),
-  expectedReturnDate: z.string().min(1, 'กรุณาระบุวันที่คาดว่าจะส่งคืน'),
-  purpose: z.string().min(1, 'กรุณาระบุวัตถุประสงค์ในการยืม'),
-  signature: z.string().optional(),
-});
+export const createBorrowRequestSchema = z
+  .object({
+    assetId: z.string().min(1, 'กรุณาระบุสินทรัพย์ที่ต้องการยืม'),
+    targetBorrowerId: z.string().optional(),
+    // Coerced here rather than in the route: an unparseable date used to reach
+    // new Date() as Invalid Date and surface as a 500 from Prisma instead of a
+    // 400 naming the field.
+    borrowDate: z.coerce.date({ message: 'วันที่ขอยืมไม่ถูกต้อง' }),
+    expectedReturnDate: z.coerce.date({ message: 'วันที่คาดว่าจะส่งคืนไม่ถูกต้อง' }),
+    purpose: z.string().min(1, 'กรุณาระบุวัตถุประสงค์ในการยืม'),
+    signature: z.string().optional(),
+  })
+  .refine((data) => data.expectedReturnDate >= data.borrowDate, {
+    message: 'วันที่คาดว่าจะส่งคืนต้องไม่ก่อนวันที่เริ่มยืม',
+    path: ['expectedReturnDate'],
+  })
+  .refine((data) => data.borrowDate >= startOfTodayUtc(), {
+    message: 'วันที่ขอยืมต้องไม่เป็นวันที่ย้อนหลัง',
+    path: ['borrowDate'],
+  });
+
+/** The borrow-window rule that needs SystemSetting, so it cannot live in the schema. */
+export function borrowWindowError(days: number, maxBorrowDays: number): string | null {
+  if (days <= maxBorrowDays) return null;
+  return (
+    'ระยะเวลาการยืมเกินกำหนด ระบบอนุญาตสูงสุด ' +
+    maxBorrowDays +
+    ' วัน แต่รายการนี้ขอยืม ' +
+    days +
+    ' วัน'
+  );
+}
 
 export const rejectRequestSchema = z.object({
   rejectedReason: z.string().min(1, 'กรุณาระบุเหตุผลที่ปฏิเสธคำขอ'),
