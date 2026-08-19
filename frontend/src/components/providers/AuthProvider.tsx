@@ -27,7 +27,6 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  register: (data: any) => Promise<void>;
   checkAuth: () => Promise<void>;
 }
 
@@ -123,14 +122,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (data: any) => {
-    try {
-      await api.post('/auth/register', data);
-    } catch (error: any) {
-      throw error.response?.data?.message || 'การลงทะเบียนล้มเหลว';
-    }
-  };
-
   const logout = () => {
     localStorage.removeItem('tif_token');
     localStorage.removeItem('tif_user');
@@ -150,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout, register, checkAuth }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );

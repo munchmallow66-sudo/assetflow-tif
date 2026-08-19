@@ -7,17 +7,6 @@ export const loginSchema = z.object({
   password: z.string().min(6, 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร'),
 });
 
-export const registerSchema = z.object({
-  email: z.string().email('อีเมลไม่ถูกต้อง').min(1, 'กรุณากรอกอีเมล'),
-  password: z.string().min(6, 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร'),
-  name: z.string().min(1, 'กรุณากรอกชื่อ-นามสกุลสำหรับผู้ใช้งาน'),
-  employeeCode: z.string().min(1, 'กรุณากรอกรหัสพนักงาน'),
-  firstName: z.string().min(1, 'กรุณากรอกชื่อจริง'),
-  lastName: z.string().min(1, 'กรุณากรอกนามสกุล'),
-  department: z.string().min(1, 'กรุณากรอกแผนก'),
-  phone: z.string().optional(),
-});
-
 // =================== Assets ===================
 
 export const createAssetSchema = z.object({

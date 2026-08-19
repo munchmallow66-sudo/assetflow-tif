@@ -37,8 +37,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       const requestUrl = error.config?.url || '';
-      // Exclude login and register endpoints so auth attempt error messages can be rendered in UI
-      if (!requestUrl.includes('/auth/login') && !requestUrl.includes('/auth/register')) {
+      // Exclude the login endpoint so a failed sign-in renders its error in the UI
+      if (!requestUrl.includes('/auth/login')) {
         localStorage.removeItem('tif_token');
         localStorage.removeItem('tif_user');
 
