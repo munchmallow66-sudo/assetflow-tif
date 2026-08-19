@@ -107,8 +107,11 @@ function AssetsContent() {
   const deleteAsset = async (id: string, name: string) => {
     if (!confirm(t('confirmDeleteAsset', { name }) || `Are you sure you want to delete ${name}?`)) return;
     try {
-      await api.delete(`/assets/${id}`);
-      toast.success(t('actionCompleted') || 'Success', t('assetDeleted', { name }) || `Asset ${name} deleted`);
+      const res = await api.delete(`/assets/${id}`);
+      toast.success(
+        t('actionCompleted') || 'Success',
+        res.data?.message || t('assetDeleted', { name }) || `Asset ${name} deleted`,
+      );
       fetchAssets();
     } catch (err: any) {
       toast.error(t('assetDeleteFailed') || 'Error', err.response?.data?.message || t('cannotDeleteAsset') || 'Could not delete asset');

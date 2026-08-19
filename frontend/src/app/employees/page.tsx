@@ -245,10 +245,13 @@ export default function EmployeesPage() {
       return;
 
     try {
-      await api.delete(`/employees/${id}`);
+      const res = await api.delete(`/employees/${id}`);
       toast.success(
-        language === 'th' ? 'ลบรายชื่อพนักงานเรียบร้อยแล้ว' : 'Employee Deleted',
-        language === 'th' ? `ลบพนักงาน ${name} ออกจากระบบแล้ว` : `Deleted ${name} from system`
+        language === 'th' ? 'ดำเนินการเรียบร้อยแล้ว' : 'Action Completed',
+        res.data?.message ||
+          (language === 'th'
+            ? `ปิดการใช้งานพนักงาน ${name} เรียบร้อยแล้ว`
+            : `Deactivated employee ${name}`)
       );
       fetchEmployees();
     } catch (err: any) {

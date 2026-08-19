@@ -4,7 +4,7 @@ import { getAuthUser, unauthorized } from '@/lib/auth';
 import { requireRoles } from '@/lib/roles';
 import { updateEmployeeSchema, formatZodError } from '@/lib/validations';
 import { createAuditLog } from '@/lib/audit-log';
-import { Role } from '@prisma/client';
+import { BorrowStatus, Role } from '@prisma/client';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -81,6 +81,21 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 }
 
+/**
+ * Statuses that mean the employee is still committed to an open borrow flow.
+ */
+const OPEN_BORROW_STATUSES = [
+  BorrowStatus.PENDING,
+  BorrowStatus.APPROVED,
+  BorrowStatus.BORROWED,
+  BorrowStatus.OVERDUE,
+  BorrowStatus.RETURN_PENDING,
+];
+
+/**
+ * Soft-delete only. Employees are never physically removed, because their
+ * BorrowRequest rows carry the borrowing history of the organisation.
+ */
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     const user = await getAuthUser(request);
@@ -94,11 +109,56 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       return NextResponse.json({ message: 'ไม่พบข้อมูลพนักงานที่ระบุ' }, { status: 404 });
     }
 
-    await prisma.employee.delete({ where: { id } });
-    await createAuditLog(user.sub, 'DELETE_EMPLOYEE', 'Employee', id, employee, null);
-    return NextResponse.json({ success: true });
+    if (!employee.isActive) {
+      return NextResponse.json(
+        { message: 'พนักงานท่านนี้ถูกปิดการใช้งานไปแล้ว ไม่จำเป็นต้องดำเนินการซ้ำ' },
+        { status: 400 },
+      );
+    }
+
+    const [openBorrowCount, heldAssetCount] = await Promise.all([
+      prisma.borrowRequest.count({
+        where: { borrowerId: id, status: { in: OPEN_BORROW_STATUSES } },
+      }),
+      prisma.asset.count({ where: { currentHolderId: id } }),
+    ]);
+
+    if (openBorrowCount > 0 || heldAssetCount > 0) {
+      return NextResponse.json(
+        {
+          message:
+            'ไม่สามารถปิดการใช้งานพนักงานท่านนี้ได้ เนื่องจากยังมีรายการยืมค้างอยู่ ' +
+            openBorrowCount +
+            ' รายการ และถือครองสินทรัพย์อยู่ ' +
+            heldAssetCount +
+            ' ชิ้น กรุณาปิดรายการยืม-คืนให้เรียบร้อยก่อน',
+        },
+        { status: 400 },
+      );
+    }
+
+    const borrowCount = await prisma.borrowRequest.count({ where: { borrowerId: id } });
+
+    const deactivated = await prisma.employee.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    await createAuditLog(user.sub, 'DEACTIVATE_EMPLOYEE', 'Employee', id, employee, deactivated);
+
+    return NextResponse.json({
+      success: true,
+      softDeleted: true,
+      employee: deactivated,
+      message:
+        borrowCount > 0
+          ? 'ปิดการใช้งานพนักงานแทนการลบ เนื่องจากมีประวัติการยืม ' +
+            borrowCount +
+            ' รายการ ที่ต้องเก็บไว้เพื่อการตรวจสอบย้อนหลัง'
+          : 'ปิดการใช้งานพนักงานแทนการลบ เพื่อรักษาความต่อเนื่องของทะเบียนพนักงานและ Audit Log',
+    });
   } catch (error: any) {
-    console.error('Delete employee error:', error);
+    console.error('Deactivate employee error:', error);
     return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }
