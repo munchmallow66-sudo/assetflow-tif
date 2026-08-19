@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     let cleanCode = code.trim();
     try {
       if (cleanCode.includes('code=')) {
-        const urlObj = new URL(cleanCode.startsWith('http') ? cleanCode : `http://dummy.com/${cleanCode}`);
+        const urlObj = new URL(cleanCode.startsWith('http') ? cleanCode : `http://example.invalid/${cleanCode}`);
         cleanCode = urlObj.searchParams.get('code') || cleanCode;
       }
     } catch (e) {

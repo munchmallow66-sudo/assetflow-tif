@@ -41,7 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     let cleanCode = scannedText.trim();
     try {
       if (cleanCode.includes('code=')) {
-        const urlObj = new URL(cleanCode.startsWith('http') ? cleanCode : `http://dummy.com/${cleanCode}`);
+        const urlObj = new URL(cleanCode.startsWith('http') ? cleanCode : `http://example.invalid/${cleanCode}`);
         cleanCode = urlObj.searchParams.get('code') || cleanCode;
       }
     } catch (e) {

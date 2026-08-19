@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/api';
 import { DEFAULT_REDIRECT, redirectTargetOrDefault } from '@/lib/redirect';
@@ -27,7 +27,6 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  checkAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -63,15 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * so the session is confirmed by asking /api/auth/me, which reads it. A 401
    * simply means no session.
    */
-  const loadUser = useCallback(async () => {
-    try {
-      const res = await api.get('/auth/me');
-      setUser(res.data);
-    } catch {
-      setUser(null);
-    }
-  }, []);
-
   useEffect(() => {
     let active = true;
 
@@ -136,12 +126,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const checkAuth = async () => {
-    await loadUser();
-  };
-
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
