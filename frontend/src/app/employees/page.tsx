@@ -29,6 +29,7 @@ import {
   Save,
   PhoneCall,
   UserX,
+  Trash2,
 } from 'lucide-react';
 
 interface EmployeeData {
@@ -59,6 +60,16 @@ export default function EmployeesPage() {
   // Deactivated staff are hidden by default; their borrowing history is
   // unaffected either way, it does not read this list.
   const [showInactive, setShowInactive] = useState(false);
+
+  // Optional login account attached while creating. An Employee row on its own
+  // is only a borrower record: the password lives on User, so without this the
+  // person cannot sign in at all.
+  const [createAccount, setCreateAccount] = useState(false);
+  const [accountData, setAccountData] = useState({
+    password: '',
+    confirmPassword: '',
+    role: 'STAFF',
+  });
 
   // Modal Dialog State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -183,12 +194,16 @@ export default function EmployeesPage() {
       email: '',
       phone: '',
     });
+    setCreateAccount(false);
+    setAccountData({ password: '', confirmPassword: '', role: 'STAFF' });
     setIsModalOpen(true);
   };
 
   // Open modal for Edit
   const handleOpenEditModal = (emp: EmployeeData) => {
     setEditingEmployee(emp);
+    setCreateAccount(false);
+    setAccountData({ password: '', confirmPassword: '', role: 'STAFF' });
     setFormData({
       employeeCode: emp.employeeCode,
       firstName: emp.firstName,
@@ -203,6 +218,31 @@ export default function EmployeesPage() {
   // Save (Create or Update)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // The confirmation field never reaches the server: it is a typing guard for
+    // the admin, who is setting a password on someone else's behalf and has no
+    // other way to catch a slip.
+    if (!editingEmployee && createAccount) {
+      if (accountData.password.length < 6) {
+        toast.error(
+          language === 'th' ? 'รหัสผ่านสั้นเกินไป' : 'Password Too Short',
+          language === 'th'
+            ? 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร'
+            : 'Password must be at least 6 characters long'
+        );
+        return;
+      }
+      if (accountData.password !== accountData.confirmPassword) {
+        toast.error(
+          language === 'th' ? 'รหัสผ่านไม่ตรงกัน' : 'Passwords Do Not Match',
+          language === 'th'
+            ? 'กรุณากรอกช่องยืนยันรหัสผ่านให้ตรงกับรหัสผ่านที่ตั้งไว้'
+            : 'The confirmation does not match the password entered'
+        );
+        return;
+      }
+    }
+
     setSubmitting(true);
 
     try {
@@ -215,10 +255,19 @@ export default function EmployeesPage() {
             : `Updated details for ${res.data.firstName} ${res.data.lastName}`
         );
       } else {
-        const res = await api.post('/employees', formData);
+        const res = await api.post('/employees', {
+          ...formData,
+          account: createAccount
+            ? { password: accountData.password, role: accountData.role }
+            : undefined,
+        });
         toast.success(
           language === 'th' ? 'ลงทะเบียนพนักงานใหม่เรียบร้อย' : 'New Employee Registered',
-          language === 'th'
+          res.data.accountCreated
+            ? language === 'th'
+              ? `ลงทะเบียน ${res.data.firstName} ${res.data.lastName} พร้อมบัญชีเข้าใช้งาน ${res.data.email} แล้ว`
+              : `Registered ${res.data.firstName} ${res.data.lastName} with a login account for ${res.data.email}`
+            : language === 'th'
             ? `ลงทะเบียน ${res.data.firstName} ${res.data.lastName} เข้าสู่ระบบแล้ว`
             : `Registered ${res.data.firstName} ${res.data.lastName} into system`
         );
@@ -264,6 +313,43 @@ export default function EmployeesPage() {
         language === 'th' ? 'ดำเนินการไม่สำเร็จ' : 'Action Failed',
         err.response?.data?.message ||
           (language === 'th' ? 'ไม่สามารถปิดการใช้งานพนักงานท่านนี้ได้' : 'Cannot deactivate this employee')
+      );
+    }
+  };
+
+  // Permanent delete. The server only lets this through for an employee with no
+  // borrowing history, no asset in hand and no login account, so a record typed
+  // in by mistake can go without punching a hole in the audit trail. Everyone
+  // else is refused with a message pointing back at deactivation.
+  const handleDelete = async (id: string, name: string) => {
+    if (
+      !confirm(
+        language === 'th'
+          ? `ยืนยันลบข้อมูลพนักงาน: ${name} ออกจากระบบอย่างถาวร?
+
+การลบนี้ย้อนกลับไม่ได้ และทำได้เฉพาะพนักงานที่ยังไม่มีประวัติการยืม-คืน ไม่ได้ถือครองสินทรัพย์ และไม่มีบัญชีผู้ใช้งานผูกอยู่`
+          : `Permanently delete employee ${name}?
+
+This cannot be undone, and is only allowed for an employee with no borrowing history, no asset in hand and no linked user account.`
+      )
+    )
+      return;
+
+    try {
+      const res = await api.delete(`/employees/${id}?permanent=true`);
+      toast.success(
+        language === 'th' ? 'ลบข้อมูลเรียบร้อยแล้ว' : 'Employee Deleted',
+        res.data?.message ||
+          (language === 'th'
+            ? `ลบข้อมูลพนักงาน ${name} ออกจากระบบแล้ว`
+            : `Removed employee ${name} from the system`)
+      );
+      fetchEmployees();
+    } catch (err: any) {
+      toast.error(
+        language === 'th' ? 'ลบข้อมูลไม่สำเร็จ' : 'Delete Failed',
+        err.response?.data?.message ||
+          (language === 'th' ? 'ไม่สามารถลบข้อมูลพนักงานท่านนี้ได้' : 'Cannot delete this employee')
       );
     }
   };
@@ -615,12 +701,21 @@ export default function EmployeesPage() {
                             >
                               <Edit2 size={14} />
                             </button>
+                            {emp.isActive && (
+                              <button
+                                onClick={() => handleDeactivate(emp.id, `${emp.firstName} ${emp.lastName}`)}
+                                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-amber-500 hover:text-amber-600 text-slate-500 transition-colors cursor-pointer"
+                                title={language === 'th' ? 'ปิดการใช้งานพนักงาน' : 'Deactivate employee'}
+                              >
+                                <UserX size={14} />
+                              </button>
+                            )}
                             <button
-                              onClick={() => handleDeactivate(emp.id, `${emp.firstName} ${emp.lastName}`)}
-                              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-rose-500 hover:text-rose-600 text-slate-500 transition-colors cursor-pointer"
-                              title={language === 'th' ? 'ปิดการใช้งานพนักงาน' : 'Deactivate employee'}
+                              onClick={() => handleDelete(emp.id, `${emp.firstName} ${emp.lastName}`)}
+                              className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-red-500 hover:text-red-600 text-slate-500 transition-colors cursor-pointer"
+                              title={language === 'th' ? 'ลบข้อมูลพนักงานถาวร' : 'Delete employee permanently'}
                             >
-                              <UserX size={14} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </td>
@@ -659,12 +754,21 @@ export default function EmployeesPage() {
                         >
                           <Edit2 size={13} />
                         </button>
+                        {emp.isActive && (
+                          <button
+                            onClick={() => handleDeactivate(emp.id, `${emp.firstName} ${emp.lastName}`)}
+                            className="p-1 border border-slate-200 dark:border-slate-700 hover:border-amber-500 hover:text-amber-600 text-slate-400 rounded-lg transition-colors cursor-pointer"
+                            title={language === 'th' ? 'ปิดการใช้งานพนักงาน' : 'Deactivate employee'}
+                          >
+                            <UserX size={13} />
+                          </button>
+                        )}
                         <button
-                          onClick={() => handleDeactivate(emp.id, `${emp.firstName} ${emp.lastName}`)}
-                          className="p-1 border border-slate-200 dark:border-slate-700 hover:border-rose-500 hover:text-rose-600 text-slate-400 rounded-lg transition-colors cursor-pointer"
-                          title={language === 'th' ? 'ปิดการใช้งานพนักงาน' : 'Deactivate employee'}
+                          onClick={() => handleDelete(emp.id, `${emp.firstName} ${emp.lastName}`)}
+                          className="p-1 border border-slate-200 dark:border-slate-700 hover:border-red-500 hover:text-red-600 text-slate-400 rounded-lg transition-colors cursor-pointer"
+                          title={language === 'th' ? 'ลบข้อมูลพนักงานถาวร' : 'Delete employee permanently'}
                         >
-                          <UserX size={13} />
+                          <Trash2 size={13} />
                         </button>
                       </div>
                     )}
@@ -880,6 +984,127 @@ export default function EmployeesPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Login Account. Offered while creating only; an existing
+                    employee account is managed from the users screen. */}
+                {!editingEmployee && (
+                  <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3.5">
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={createAccount}
+                        onChange={(e) => setCreateAccount(e.target.checked)}
+                        className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-600 accent-sky-500 cursor-pointer shrink-0"
+                      />
+                      <span>
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                          {language === 'th'
+                            ? 'สร้างบัญชีเข้าใช้งานระบบให้พนักงานท่านนี้'
+                            : 'Create a login account for this employee'}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium block mt-0.5 leading-relaxed">
+                          {language === 'th'
+                            ? 'ถ้าไม่เลือก จะบันทึกเป็นรายชื่อผู้ยืมเท่านั้น พนักงานจะยังเข้าสู่ระบบด้วยตนเองไม่ได้'
+                            : 'Leave unchecked to register a borrower record only; they will not be able to sign in.'}
+                        </span>
+                      </span>
+                    </label>
+
+                    {createAccount && (
+                      <div className="space-y-3.5 rounded-xl bg-sky-50/60 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900/40 p-3.5">
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                          {language === 'th' ? 'เข้าสู่ระบบด้วยอีเมล ' : 'Signs in with '}
+                          <span className="font-mono font-bold text-sky-600 dark:text-sky-400">
+                            {formData.email ||
+                              (language === 'th' ? '(กรอกอีเมลด้านบน)' : '(fill in the email above)')}
+                          </span>
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                              {language === 'th' ? 'รหัสผ่าน *' : 'Password *'}
+                            </label>
+                            <div className="relative">
+                              <Lock
+                                size={16}
+                                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                              />
+                              <input
+                                type="password"
+                                required
+                                minLength={6}
+                                autoComplete="new-password"
+                                value={accountData.password}
+                                onChange={(e) =>
+                                  setAccountData({ ...accountData, password: e.target.value })
+                                }
+                                placeholder={
+                                  language === 'th' ? 'อย่างน้อย 6 ตัวอักษร' : 'At least 6 characters'
+                                }
+                                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                              {language === 'th' ? 'ยืนยันรหัสผ่าน *' : 'Confirm Password *'}
+                            </label>
+                            <div className="relative">
+                              <Lock
+                                size={16}
+                                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                              />
+                              <input
+                                type="password"
+                                required
+                                minLength={6}
+                                autoComplete="new-password"
+                                value={accountData.confirmPassword}
+                                onChange={(e) =>
+                                  setAccountData({ ...accountData, confirmPassword: e.target.value })
+                                }
+                                placeholder={language === 'th' ? 'กรอกซ้ำอีกครั้ง' : 'Type it again'}
+                                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                            {language === 'th' ? 'บทบาทในระบบ *' : 'System Role *'}
+                          </label>
+                          <div className="relative">
+                            <ShieldCheck
+                              size={16}
+                              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+                            />
+                            <select
+                              value={accountData.role}
+                              onChange={(e) => setAccountData({ ...accountData, role: e.target.value })}
+                              className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 transition-all cursor-pointer"
+                            >
+                              <option value="STAFF">
+                                STAFF — {language === 'th' ? 'ยื่นคำขอยืม-คืนได้' : 'Submit borrow and return requests'}
+                              </option>
+                              <option value="APPROVER">
+                                APPROVER — {language === 'th' ? 'อนุมัติคำขอยืม-คืนได้' : 'Approve borrow and return requests'}
+                              </option>
+                              <option value="VIEWER">
+                                VIEWER — {language === 'th' ? 'ดูข้อมูลได้อย่างเดียว' : 'Read-only access'}
+                              </option>
+                              <option value="ADMIN">
+                                ADMIN — {language === 'th' ? 'จัดการระบบได้ทั้งหมด' : 'Full system administration'}
+                              </option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Footer Buttons */}
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">

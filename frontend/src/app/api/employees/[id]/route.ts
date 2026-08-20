@@ -93,8 +93,16 @@ const OPEN_BORROW_STATUSES = [
 ];
 
 /**
- * Soft-delete only. Employees are never physically removed, because their
- * BorrowRequest rows carry the borrowing history of the organisation.
+ * Two removal modes.
+ *
+ * Default is a soft delete: the row stays and only `isActive` flips, because
+ * the employee's BorrowRequest rows carry the borrowing history of the
+ * organisation and must survive.
+ *
+ * `?permanent=true` physically removes the row. It is allowed only for an
+ * employee who never took part in anything - no borrow request of any status,
+ * no asset in hand, no login account attached - which is the record-created-by-
+ * mistake case. Anything else has to stay for the audit trail.
  */
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
@@ -104,9 +112,73 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     if (roleError) return roleError;
 
     const { id } = await params;
-    const employee = await prisma.employee.findUnique({ where: { id } });
+    const permanent = new URL(request.url).searchParams.get('permanent') === 'true';
+
+    const employee = await prisma.employee.findUnique({
+      where: { id },
+      include: { user: { select: { id: true, email: true } } },
+    });
     if (!employee) {
       return NextResponse.json({ message: 'ไม่พบข้อมูลพนักงานที่ระบุ' }, { status: 404 });
+    }
+
+    // The linked account is checked separately below; it must not leak into the
+    // audit log snapshot, which records the employee row alone.
+    const { user: linkedUser, ...employeeData } = employee;
+
+    const [openBorrowCount, heldAssetCount, borrowCount] = await Promise.all([
+      prisma.borrowRequest.count({
+        where: { borrowerId: id, status: { in: OPEN_BORROW_STATUSES } },
+      }),
+      prisma.asset.count({ where: { currentHolderId: id } }),
+      prisma.borrowRequest.count({ where: { borrowerId: id } }),
+    ]);
+
+    if (permanent) {
+      if (borrowCount > 0) {
+        return NextResponse.json(
+          {
+            message:
+              'ไม่สามารถลบถาวรได้ เนื่องจากพนักงานท่านนี้มีประวัติการยืม ' +
+              borrowCount +
+              ' รายการ ที่ต้องเก็บไว้เพื่อการตรวจสอบย้อนหลัง กรุณาใช้การปิดการใช้งานแทน',
+          },
+          { status: 400 },
+        );
+      }
+
+      if (heldAssetCount > 0) {
+        return NextResponse.json(
+          {
+            message:
+              'ไม่สามารถลบถาวรได้ เนื่องจากพนักงานท่านนี้ยังถือครองสินทรัพย์อยู่ ' +
+              heldAssetCount +
+              ' ชิ้น กรุณาคืนสินทรัพย์ให้เรียบร้อยก่อน',
+          },
+          { status: 400 },
+        );
+      }
+
+      if (linkedUser) {
+        return NextResponse.json(
+          {
+            message:
+              'ไม่สามารถลบถาวรได้ เนื่องจากพนักงานท่านนี้ผูกอยู่กับบัญชีผู้ใช้งาน ' +
+              linkedUser.email +
+              ' กรุณาลบบัญชีผู้ใช้งานในหน้าจัดการผู้ใช้งานก่อน',
+          },
+          { status: 400 },
+        );
+      }
+
+      await prisma.employee.delete({ where: { id } });
+      await createAuditLog(user.sub, 'DELETE_EMPLOYEE', 'Employee', id, employeeData, null);
+
+      return NextResponse.json({
+        success: true,
+        softDeleted: false,
+        message: 'ลบข้อมูลพนักงานออกจากระบบถาวรเรียบร้อยแล้ว',
+      });
     }
 
     if (!employee.isActive) {
@@ -115,13 +187,6 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         { status: 400 },
       );
     }
-
-    const [openBorrowCount, heldAssetCount] = await Promise.all([
-      prisma.borrowRequest.count({
-        where: { borrowerId: id, status: { in: OPEN_BORROW_STATUSES } },
-      }),
-      prisma.asset.count({ where: { currentHolderId: id } }),
-    ]);
 
     if (openBorrowCount > 0 || heldAssetCount > 0) {
       return NextResponse.json(
@@ -137,14 +202,12 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       );
     }
 
-    const borrowCount = await prisma.borrowRequest.count({ where: { borrowerId: id } });
-
     const deactivated = await prisma.employee.update({
       where: { id },
       data: { isActive: false },
     });
 
-    await createAuditLog(user.sub, 'DEACTIVATE_EMPLOYEE', 'Employee', id, employee, deactivated);
+    await createAuditLog(user.sub, 'DEACTIVATE_EMPLOYEE', 'Employee', id, employeeData, deactivated);
 
     return NextResponse.json({
       success: true,
@@ -158,7 +221,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
           : 'ปิดการใช้งานพนักงานแทนการลบ เพื่อรักษาความต่อเนื่องของทะเบียนพนักงานและ Audit Log',
     });
   } catch (error: any) {
-    console.error('Deactivate employee error:', error);
+    console.error('Delete employee error:', error);
     return NextResponse.json({ message: error.message || 'เกิดข้อผิดพลาด' }, { status: 500 });
   }
 }

@@ -36,6 +36,16 @@ export const updateAssetSchema = z.object({
 
 // =================== Employees ===================
 
+/**
+ * The login account optionally created alongside a new employee. Email and
+ * display name are deliberately not accepted here: both are derived from the
+ * employee record itself, so the two rows cannot drift apart at creation time.
+ */
+export const createEmployeeAccountSchema = z.object({
+  password: z.string().min(6, 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร'),
+  role: z.enum(['ADMIN', 'STAFF', 'APPROVER', 'VIEWER'], { message: 'บทบาทไม่ถูกต้อง' }),
+});
+
 export const createEmployeeSchema = z.object({
   employeeCode: z.string().min(1, 'กรุณากรอกรหัสพนักงาน'),
   firstName: z.string().min(1, 'กรุณากรอกชื่อจริง'),
@@ -43,6 +53,7 @@ export const createEmployeeSchema = z.object({
   department: z.string().min(1, 'กรุณากรอกแผนก'),
   email: z.string().email('อีเมลไม่ถูกต้อง').min(1, 'กรุณากรอกอีเมล'),
   phone: z.string().optional(),
+  account: createEmployeeAccountSchema.optional(),
 });
 
 export const updateEmployeeSchema = z.object({
